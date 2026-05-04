@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const [previousPage, setPreviousPage] = useState<string>("beranda");
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
+    const savedUser = sessionStorage.getItem("user");
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);

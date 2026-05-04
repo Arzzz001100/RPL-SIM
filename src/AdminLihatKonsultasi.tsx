@@ -9,7 +9,7 @@ const AdminLihatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
   const [daftarKonsultasi, setDaftarKonsultasi] = useState<any[]>([]);
 
   // Ambil data user untuk proteksi role Kepsek
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const isKepsek = user.role === "kepala sekolah";
 
   useEffect(() => {
