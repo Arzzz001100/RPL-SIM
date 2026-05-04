@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 interface Props {
   onSwitch: () => void;
-  onLogin: (role: string) => void; // Kita tambahkan parameter role di sini
+  onLogin: (role: string) => void;
 }
 
 const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
@@ -20,8 +20,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       const data = await response.json();
 
       if (data.success) {
-        sessionStorage.setItem("user", JSON.stringify(data.user));
-        // Kirim role (siswa/admin) ke App.tsx
+        localStorage.setItem("user", JSON.stringify(data.user));
         onLogin(data.user.role);
       } else {
         alert(data.message || "Email atau Password salah!");
@@ -34,53 +33,73 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-[#1e1b4b]">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 to-black/50 -z-10"></div>
-      <div className="bg-white/10 backdrop-blur-md p-8 rounded-[50px] shadow-2xl w-[90%] max-w-[400px] border border-white/20 text-center flex flex-col items-center">
-        <div className="mb-6">
-          <h1 className="text-white font-bold text-3xl tracking-tight italic">
+    <div className="fixed inset-0 flex items-center justify-center bg-[#1e3a8a]">
+      {/* Efek Dekorasi Background agar lebih estetik */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full -ml-20 -mt-20 blur-3xl"></div>
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-black/20 rounded-full -mr-20 -mb-20 blur-3xl"></div>
+
+      <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-[90%] max-w-[420px] border border-white/20 text-center flex flex-col items-center relative z-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-white font-black text-4xl tracking-tighter italic uppercase">
             SIBY Group
           </h1>
-          <p className="text-white text-[10px] mt-1 font-semibold uppercase tracking-[0.3em]">
+          <p className="text-white/70 text-[10px] mt-2 font-bold uppercase tracking-[0.4em]">
             SMP TRIDHARMA MANADO
           </p>
         </div>
-        <div className="w-28 h-28 bg-white rounded-2xl mb-8 shadow-lg overflow-hidden flex items-center justify-center p-2 border border-white/20">
-          <img
-            src="/logo-sekolah.png"
-            alt="Logo"
-            className="w-full h-full object-contain"
-          />
+
+        {/* Logo Section - Dibuat mencolok dengan kontainer putih solid */}
+        <div className="group mb-10">
+          <div className="w-32 h-32 bg-white rounded-[35px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-center p-4 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 cursor-pointer">
+            <img
+              src="/logo-sekolah.png"
+              alt="Logo"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          </div>
         </div>
-        <form className="w-full space-y-4" onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/30"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/30"
-            required
-          />
+
+        {/* Form Section */}
+        <form className="w-full space-y-5" onSubmit={handleLogin}>
+          <div className="relative">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
+              required
+            />
+          </div>
+          <div className="relative">
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
+              required
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full py-4 mt-4 bg-[#1e1b4b] hover:bg-indigo-900 text-white font-bold rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs"
+            className="w-full py-4 mt-4 bg-white text-[#1e3a8a] font-black rounded-2xl shadow-xl transition-all hover:bg-gray-100 active:scale-95 uppercase tracking-[0.2em] text-xs"
           >
             Masuk
           </button>
         </form>
-        <p className="mt-8 text-sm text-white/80">
+
+        {/* Switch Section */}
+        <p className="mt-10 text-xs text-white/60 font-medium uppercase tracking-widest">
           Belum punya akun?{" "}
           <button
             onClick={onSwitch}
-            className="text-blue-400 font-bold hover:underline"
+            className="text-white border-b border-white hover:text-blue-200 hover:border-blue-200 transition-all ml-1 font-black"
           >
             Buat akun
           </button>

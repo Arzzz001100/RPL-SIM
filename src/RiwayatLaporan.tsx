@@ -6,30 +6,22 @@ interface Props {
 }
 
 const RiwayatLaporan: React.FC<Props> = ({ onBack, onLihatDetail }) => {
-  const [riwayat, setRiwayat] = useState<any[]>([]);
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const [laporan, setLaporan] = useState<any[]>([]);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     fetch(`http://localhost:8080/api/laporan/user/${user.id}`)
       .then((res) => res.json())
-      .then((data) => {
-        // Cek data di console jika deskripsi masih tidak muncul
-        console.log("Cek data laporan:", data);
-        setRiwayat(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setRiwayat([]);
-      });
+      .then((data) => setLaporan(Array.isArray(data) ? data : []))
+      .catch(() => setLaporan([]));
   }, [user.id]);
 
-  // Fungsi merapikan tanggal (Menghilangkan format ISO .000Z)
   const formatTanggal = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
-        month: "long",
+        month: "short",
         year: "numeric",
       }).format(date);
     } catch (e) {
@@ -37,68 +29,85 @@ const RiwayatLaporan: React.FC<Props> = ({ onBack, onLihatDetail }) => {
     }
   };
 
+  // Fungsi untuk menentukan warna badge status secara dinamis
+  const getStatusStyle = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "TERKIRIM":
+        return "bg-blue-500 text-white shadow-blue-200";
+      case "DIPROSES":
+        return "bg-orange-500 text-white shadow-orange-200";
+      case "SELESAI":
+        return "bg-green-500 text-white shadow-green-200";
+      default:
+        return "bg-gray-500 text-white shadow-gray-200";
+    }
+  };
+
   return (
-    /* h-screen + overflow-y-auto agar halaman tidak terpotong dan bisa di-scroll */
-    <div className="h-screen w-full bg-gray-50 font-sans text-left overflow-y-auto pb-20">
-      {/* Header Sticky agar tetap terlihat saat scroll */}
-      <div className="p-10 flex justify-between items-center sticky top-0 bg-gray-50/90 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-4">
-          <div className="w-2 h-10 bg-blue-600 rounded-full shadow-md"></div>
-          <h1 className="text-4xl font-black text-blue-900 italic uppercase tracking-tighter">
+    <div className="min-h-screen bg-gray-50 p-8 font-sans text-left">
+      {/* HEADER SECTION */}
+      <div className="max-w-6xl mx-auto flex justify-between items-end mb-12 border-l-8 border-blue-900 pl-6">
+        <div>
+          <h1 className="text-4xl font-black text-blue-900 uppercase italic tracking-tighter">
             Semua Laporan Saya
           </h1>
+          <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">
+            Pantau perkembangan aduan Anda
+          </p>
         </div>
         <button
           onClick={onBack}
-          className="bg-red-500 text-white px-10 py-3 rounded-2xl font-black uppercase text-xs shadow-lg shadow-red-200 active:scale-95 hover:bg-red-600 transition-all"
+          className="bg-red-500 text-white px-10 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-100 hover:bg-red-600 active:scale-95 transition-all"
         >
           Kembali
         </button>
       </div>
 
-      {/* Grid Laporan */}
-      <div className="px-10 grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-        {riwayat.length > 0 ? (
-          riwayat.map((item) => (
+      {/* GRID LAPORAN */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        {laporan.length > 0 ? (
+          laporan.map((item) => (
             <div
               key={item.id}
               onClick={() => onLihatDetail(item)}
-              className="bg-white p-10 rounded-[50px] shadow-2xl shadow-gray-200 border border-white flex justify-between items-center cursor-pointer hover:border-blue-200 transition-all active:scale-[0.99] group"
+              className="group bg-white rounded-[35px] p-8 shadow-sm border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer relative overflow-hidden"
             >
-              <div className="flex-1">
-                <p className="text-[10px] font-black text-gray-400 uppercase mb-2 tracking-[0.2em]">
-                  {formatTanggal(item.tanggal_lapor || item.tanggal)}
-                </p>
-                <h4 className="text-2xl font-black text-blue-900 uppercase italic mb-3">
-                  Kasus {item.kategori}
-                </h4>
+              {/* Garis Aksen Samping */}
+              <div className="absolute left-0 top-0 bottom-0 w-2 bg-blue-900 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                {/* SOLUSI DESKRIPSI: Mengecek semua kemungkinan nama property dari database */}
-                <p className="text-sm text-gray-400 font-medium italic leading-relaxed">
-                  {item.keluhan ||
-                    item.deskripsi ||
-                    item.isi_laporan ||
-                    "Detail deskripsi tidak ditemukan"}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">
+                    {formatTanggal(item.tanggal_lapor)}
+                  </span>
+                  <h3 className="text-xl font-black text-blue-900 uppercase italic group-hover:text-blue-600 transition-colors">
+                    Kasus {item.kategori}
+                  </h3>
+                </div>
+                <span
+                  className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase shadow-md transition-transform group-hover:scale-110 ${getStatusStyle(item.status)}`}
+                >
+                  {item.status}
+                </span>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <p className="text-gray-500 text-sm leading-relaxed italic line-clamp-2">
+                  "{item.deskripsi || "Tidak ada deskripsi tambahan..."}"
                 </p>
               </div>
 
-              <div className="ml-6 flex-shrink-0">
-                <span
-                  className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg ${
-                    item.status === "Selesai"
-                      ? "bg-blue-600 text-white shadow-blue-200"
-                      : "bg-blue-500 text-white shadow-blue-100"
-                  }`}
-                >
-                  {item.status}
+              <div className="mt-6 flex items-center justify-end">
+                <span className="text-[10px] font-black text-blue-900 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all flex items-center gap-2">
+                  Lihat Detail <span>→</span>
                 </span>
               </div>
             </div>
           ))
         ) : (
-          <div className="col-span-1 md:col-span-2 py-24 text-center bg-white rounded-[50px] shadow-inner border-2 border-dashed border-gray-100">
-            <p className="text-gray-300 font-black italic uppercase tracking-widest">
-              Belum ada data laporan yang tersimpan
+          <div className="col-span-full py-32 text-center">
+            <p className="text-gray-300 font-black italic text-xl uppercase tracking-tighter">
+              Belum ada riwayat laporan yang dibuat.
             </p>
           </div>
         )}

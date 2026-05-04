@@ -5,7 +5,7 @@ import Beranda from "./Beranda";
 import Laporan from "./Laporan";
 import Konsultasi from "./Konsultasi";
 import BerandaAdmin from "./BerandaAdmin";
-import BerandaKepsek from "./BerandaKepsek"; // Import halaman baru Kepsek
+import BerandaKepsek from "./BerandaKepsek";
 import RiwayatLaporan from "./RiwayatLaporan";
 import RiwayatKonsultasi from "./RiwayatKonsultasi";
 import DetailLaporan from "./DetailLaporan";
@@ -20,13 +20,15 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<string>("login");
   const [selectedData, setSelectedData] = useState<any>(null);
 
+  // State kunci untuk mengingat halaman asal (Beranda/Riwayat)
+  const [previousPage, setPreviousPage] = useState<string>("beranda");
+
   useEffect(() => {
-    const savedUser = sessionStorage.getItem("user");
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
 
-      // Tentukan halaman beranda berdasarkan role saat aplikasi dimuat
       if (parsedUser.role === "admin") {
         setCurrentPage("admin_beranda");
       } else if (parsedUser.role === "kepala sekolah") {
@@ -40,10 +42,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = (role: string) => {
-    const savedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
     setUser(savedUser);
 
-    // Navigasi otomatis setelah login berdasarkan role
     if (role === "admin") {
       setCurrentPage("admin_beranda");
     } else if (role === "kepala sekolah") {
@@ -54,12 +55,11 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("user");
+    localStorage.removeItem("user");
     setUser(null);
     setCurrentPage("login");
   };
 
-  // Proteksi: Jika belum login, hanya boleh lihat Login atau Register
   if (!user && currentPage !== "register") {
     return (
       <Login
@@ -80,8 +80,14 @@ const App: React.FC = () => {
           onGoRiwayat={() => setCurrentPage("riwayat_konsultasi")}
           onGoRiwayatLapor={() => setCurrentPage("riwayat_laporan")}
           onLihatDetail={(item: any) => {
+            setPreviousPage("beranda");
             setSelectedData(item);
             setCurrentPage("detail_laporan");
+          }}
+          onLihatDetailKonsultasi={(item: any) => {
+            setPreviousPage("beranda");
+            setSelectedData(item);
+            setCurrentPage("detail_konsultasi");
           }}
         />
       )}
@@ -101,6 +107,7 @@ const App: React.FC = () => {
         <RiwayatLaporan
           onBack={() => setCurrentPage("beranda")}
           onLihatDetail={(item: any) => {
+            setPreviousPage("riwayat_laporan");
             setSelectedData(item);
             setCurrentPage("detail_laporan");
           }}
@@ -110,21 +117,23 @@ const App: React.FC = () => {
       {currentPage === "riwayat_konsultasi" && (
         <RiwayatKonsultasi
           onBack={() => setCurrentPage("beranda")}
+          // PERBAIKAN: Menggunakan onDetail agar sinkron dengan file RiwayatKonsultasi.tsx
           onLihatDetail={(item: any) => {
+            setPreviousPage("riwayat_konsultasi");
             setSelectedData(item);
             setCurrentPage("detail_konsultasi");
           }}
         />
       )}
 
-      {/* --- DETAIL (DIPAKAI SEMUA ROLE) --- */}
+      {/* --- DETAIL SISWA (DENGAN SMART BACK) --- */}
       {currentPage === "detail_laporan" && (
         <DetailLaporan
           onBack={() => {
             if (user?.role === "admin" || user?.role === "kepala sekolah") {
               setCurrentPage("admin_lihat_laporan");
             } else {
-              setCurrentPage("riwayat_laporan");
+              setCurrentPage(previousPage);
             }
           }}
           selectedData={selectedData}
@@ -133,7 +142,13 @@ const App: React.FC = () => {
 
       {currentPage === "detail_konsultasi" && (
         <DetailKonsultasi
-          onBack={() => setCurrentPage("riwayat_konsultasi")}
+          onBack={() => {
+            if (user?.role === "admin" || user?.role === "kepala sekolah") {
+              setCurrentPage("admin_lihat_konsultasi");
+            } else {
+              setCurrentPage(previousPage);
+            }
+          }}
           selectedData={selectedData}
         />
       )}
@@ -156,7 +171,7 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* --- PANEL MONITORING (ADMIN & KEPSEK) --- */}
+      {/* --- PANEL MONITORING --- */}
       {currentPage === "admin_lihat_laporan" && (
         <AdminLihatLaporan
           onBack={() => {
