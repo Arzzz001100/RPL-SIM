@@ -20,7 +20,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("user", JSON.stringify(data.user));
         // Kirim role (siswa/admin) ke App.tsx
         onLogin(data.user.role);
       } else {

@@ -21,7 +21,7 @@ const App: React.FC = () => {
   const [selectedData, setSelectedData] = useState<any>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
+    const savedUser = sessionStorage.getItem("user");
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
@@ -40,7 +40,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = (role: string) => {
-    const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const savedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
     setUser(savedUser);
 
     // Navigasi otomatis setelah login berdasarkan role
@@ -54,7 +54,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     setUser(null);
     setCurrentPage("login");
   };

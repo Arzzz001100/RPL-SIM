@@ -19,7 +19,7 @@ const Beranda: React.FC<Props> = ({
 }) => {
   const [riwayatLaporan, setRiwayatLaporan] = useState<any[]>([]);
   const [riwayatKonsultasi, setRiwayatKonsultasi] = useState<any[]>([]);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   useEffect(() => {
     const fetchData = async () => {

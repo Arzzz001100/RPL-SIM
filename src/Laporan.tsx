@@ -5,7 +5,7 @@ interface LaporanProps {
 }
 
 const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [jenis, setJenis] = useState<string>("");
@@ -14,7 +14,7 @@ const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
   const [preview, setPreview] = useState<string>("");
 
   useEffect(() => {
-    const savedDraft = localStorage.getItem(`draft_laporan_${user.id}`);
+    const savedDraft = sessionStorage.getItem(`draft_laporan_${user.id}`);
     if (savedDraft) {
       const { kategori, isi } = JSON.parse(savedDraft);
       setJenis(kategori);
@@ -31,7 +31,7 @@ const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
   };
 
   const handleSimpanDraft = () => {
-    localStorage.setItem(
+    sessionStorage.setItem(
       `draft_laporan_${user.id}`,
       JSON.stringify({ kategori: jenis, isi: deskripsi }),
     );
@@ -57,7 +57,7 @@ const Laporan: React.FC<LaporanProps> = ({ onBack }) => {
       });
 
       if (res.ok) {
-        localStorage.removeItem(`draft_laporan_${user.id}`);
+        sessionStorage.removeItem(`draft_laporan_${user.id}`);
         alert("Laporan Berhasil Terkirim!");
         onBack();
       } else {
