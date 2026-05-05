@@ -60,61 +60,65 @@ const AdminLihatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {daftarKonsultasi.length > 0 ? (
-              daftarKonsultasi.map((item) => ( // SUDAH DIPERBAIKI: daftarKonsultasi
-                <tr
-                  key={item.id}
-                  className="hover:bg-blue-50/50 transition-all cursor-default"
-                >
-                  <td className="px-10 py-7">
-                    <p className="font-black text-[#1e3a8a] text-lg uppercase tracking-tight">
-                      {item.nama || "Siswa"}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase italic tracking-tighter mt-1">
-                      "{item.topik}"
-                    </p>
-                  </td>
-                  <td className="px-10 py-7">
-                    <p className="font-black text-[#1e3a8a] text-[11px] uppercase italic">
-                      {item.nama_guru}
-                    </p>
-                  </td>
-                  <td className="px-10 py-7">
-                    <p className="text-[10px] font-black text-gray-600 uppercase">
-                      {formatTanggal(item.tanggal)}
-                    </p>
-                    <p className="text-[9px] font-bold text-gray-400 mt-0.5">
-                      {item.jam} WITA
-                    </p>
-                  </td>
-                  <td className="px-10 py-7 text-center">
-                    {isKepsek ? (
-                      <button
-                        onClick={() => onDetail(item)}
-                        className="bg-slate-400 text-white px-6 py-2 rounded-xl font-black text-[10px] uppercase shadow-md hover:bg-[#1e3a8a] transition-all"
-                      >
-                        Lihat
-                      </button>
-                    ) : item.status === "Selesai" ? (
-                      <div className="flex items-center justify-center">
-                        <span className="bg-[#1e3a8a] text-white px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-md">
-                          ✓ Selesai
-                        </span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => onDetail(item)}
-                        className={`px-6 py-2 rounded-xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all text-white ${
-                          item.status === "Diterima" 
-                            ? "bg-blue-500 hover:bg-blue-600" 
-                            : "bg-orange-500 hover:bg-orange-600"
-                        }`}
-                      >
-                        {item.status || "Menunggu"}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
+              daftarKonsultasi.map(
+                (
+                  item, // SUDAH DIPERBAIKI: daftarKonsultasi
+                ) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-blue-50/50 transition-all cursor-default"
+                  >
+                    <td className="px-10 py-7">
+                      <p className="font-black text-[#1e3a8a] text-lg uppercase tracking-tight">
+                        {item.nama || "Siswa"}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase italic tracking-tighter mt-1">
+                        "{item.topik}"
+                      </p>
+                    </td>
+                    <td className="px-10 py-7">
+                      <p className="font-black text-[#1e3a8a] text-[11px] uppercase italic">
+                        {item.nama_guru}
+                      </p>
+                    </td>
+                    <td className="px-10 py-7">
+                      <p className="text-[10px] font-black text-gray-600 uppercase">
+                        {formatTanggal(item.tanggal)}
+                      </p>
+                      <p className="text-[9px] font-bold text-gray-400 mt-0.5">
+                        {item.jam} WITA
+                      </p>
+                    </td>
+                    <td className="px-10 py-7 text-center">
+                      {isKepsek ? (
+                        <button
+                          onClick={() => onDetail(item)}
+                          className="bg-slate-400 text-white px-6 py-2 rounded-xl font-black text-[10px] uppercase shadow-md hover:bg-[#1e3a8a] transition-all"
+                        >
+                          Lihat
+                        </button>
+                      ) : item.status === "Selesai" ? (
+                        <div className="flex items-center justify-center">
+                          <span className="bg-[#1e3a8a] text-white px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-md">
+                            ✓ Selesai
+                          </span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => onDetail(item)}
+                          className={`px-6 py-2 rounded-xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all text-white ${
+                            item.status === "Diterima"
+                              ? "bg-blue-500 hover:bg-blue-600"
+                              : "bg-orange-500 hover:bg-orange-600"
+                          }`}
+                        >
+                          {item.status || "Menunggu"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )
             ) : (
               <tr>
                 <td

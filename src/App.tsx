@@ -42,7 +42,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogin = (role: string) => {
-    const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const savedUser = JSON.parse(sessionStorage.getItem("user") || "{}");
     setUser(savedUser);
 
     if (role === "admin") {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
     setUser(null);
     setCurrentPage("login");
   };
@@ -118,7 +118,7 @@ const App: React.FC = () => {
         <RiwayatKonsultasi
           onBack={() => setCurrentPage("beranda")}
           // PERBAIKAN: Menggunakan onDetail agar sinkron dengan file RiwayatKonsultasi.tsx
-          onLihatDetail={(item: any) => {
+          onDetail={(item: any) => {
             setPreviousPage("riwayat_konsultasi");
             setSelectedData(item);
             setCurrentPage("detail_konsultasi");

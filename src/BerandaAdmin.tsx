@@ -82,7 +82,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
       {/* BANNER UTAMA */}
       <div className="mx-10 mt-6 bg-[#1e3a8a] rounded-[40px] py-14 text-center shadow-2xl flex flex-col items-center relative overflow-hidden">
         <h2 className="text-4xl font-black text-white mb-2 italic uppercase tracking-tight relative z-10">
-          PANEL ADMINISTRASI SIBY
+          Sistem Pengaduan Masalah
         </h2>
         <p className="text-white/60 font-bold tracking-[0.3em] mb-10 text-[10px] relative z-10 uppercase">
           SMP Tridharma Manado
