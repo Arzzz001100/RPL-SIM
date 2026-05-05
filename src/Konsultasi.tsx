@@ -6,7 +6,7 @@ interface Props {
 }
 
 const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const [listGuru, setListGuru] = useState<any[]>([]);
   const [idGuru, setIdGuru] = useState("");
   const [tanggal, setTanggal] = useState("");

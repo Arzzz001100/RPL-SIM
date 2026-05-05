@@ -7,7 +7,7 @@ interface Props {
 
 const RiwayatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
   const [riwayat, setRiwayat] = useState<any[]>([]);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   useEffect(() => {
     if (!user.id) return;

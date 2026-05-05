@@ -20,7 +20,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("user", JSON.stringify(data.user));
         onLogin(data.user.role);
       } else {
         alert(data.message || "Email atau Password salah!");

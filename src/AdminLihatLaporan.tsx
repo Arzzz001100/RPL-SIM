@@ -9,7 +9,7 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
   const [laporan, setLaporan] = useState<any[]>([]);
 
   // Mengambil data user untuk pengecekan role
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   useEffect(() => {
     fetch("http://localhost:8080/api/admin/laporan")

@@ -13,7 +13,7 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
   const [loading, setLoading] = useState(false);
 
   // --- [ PROTEKSI ROLE ] ---
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const isKepsek = user.role === "kepala sekolah";
 
   const handleUpdate = async () => {

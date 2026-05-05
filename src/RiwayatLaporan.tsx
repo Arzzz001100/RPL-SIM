@@ -7,7 +7,7 @@ interface Props {
 
 const RiwayatLaporan: React.FC<Props> = ({ onBack, onLihatDetail }) => {
   const [laporan, setLaporan] = useState<any[]>([]);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   useEffect(() => {
     fetch(`http://localhost:8080/api/laporan/user/${user.id}`)
