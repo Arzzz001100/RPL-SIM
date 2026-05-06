@@ -120,7 +120,7 @@ app.get("/api/guru", (req, res) => {
 app.post("/api/konsultasi", (req, res) => {
   const { id_siswa, id_guru, tanggal, jam, topik } = req.body;
   db.query(
-    "INSERT INTO konsultasi (id_siswa, id_guru, tanggal, jam, topik, status) VALUES (?, ?, ?, ?, ?, 'Terkirim')",
+    "INSERT INTO konsultasi (id_siswa, id_guru, tanggal, jam, topik, status) VALUES (?, ?, ?, ?, ?, 'MENUNGGU')",
     [id_siswa, id_guru, tanggal, jam, topik],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
