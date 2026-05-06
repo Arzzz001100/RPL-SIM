@@ -27,7 +27,7 @@ const RiwayatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
               Riwayat Konsultasi
             </h2>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
-              Monitoring Jadwal & Bimbingan SIBY
+              Monitoring Bimbingan
             </p>
           </div>
         </div>

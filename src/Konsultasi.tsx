@@ -72,15 +72,12 @@ const Konsultasi: React.FC<Props> = ({ onBack, onSent }) => {
         topik,
       }),
     });
-    const data = await res.json();
-console.log("RESPONSE:", data);
+ 
 
 if (res.ok) {
   alert("Berhasil Terkirim!");
   onSent();
-} else {
-  alert("Error: " + data.error); // ← ini akan tampilkan pesan error spesifik
-}
+} 
 
   };
 

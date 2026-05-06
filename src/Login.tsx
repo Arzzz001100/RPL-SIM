@@ -41,8 +41,8 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-[90%] max-w-[420px] border border-white/20 text-center flex flex-col items-center relative z-10">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-white font-black text-4xl tracking-tighter italic uppercase">
-            SIBY Group
+          <h1 className="text-white font-black text-4x2 tracking-tighter italic uppercase">
+            Sistem Pengaduan Masalah
           </h1>
           <p className="text-white/70 text-[10px] mt-2 font-bold uppercase tracking-[0.4em]">
             SMP TRIDHARMA MANADO
