@@ -34,6 +34,8 @@ const RiwayatLaporan: React.FC<Props> = ({ onBack, onLihatDetail }) => {
     switch (status?.toUpperCase()) {
       case "TERKIRIM":
         return "bg-blue-500 text-white shadow-blue-200";
+      case "DITERIMA":
+        return "bg-yellow-500 text-white shadow-yellow-200";
       case "DIPROSES":
         return "bg-orange-500 text-white shadow-orange-200";
       case "SELESAI":

@@ -89,7 +89,7 @@ app.post("/api/laporan", upload.single("foto"), (req, res) => {
   const foto = req.file ? req.file.filename : null;
   const tanggal = new Date().toISOString().split("T")[0];
   db.query(
-    "INSERT INTO laporan (id_siswa, kategori, isi_laporan, foto, tanggal_lapor, status) VALUES (?, ?, ?, ?, ?, 'Terkirim')",
+    "INSERT INTO laporan (id_siswa, kategori, isi_laporan, foto, tanggal_lapor, status) VALUES (?, ?, ?, ?, ?, 'TERKIRIM')",
     [id_siswa, kategori, isi_laporan, foto, tanggal],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });

@@ -27,6 +27,8 @@ const AdminLihatLaporan: React.FC<Props> = ({ onBack, onDetail }) => {
     switch (status?.toUpperCase()) {
       case "TERKIRIM":
         return "bg-orange-500";
+      case "DITERIMA": 
+        return "bg-yellow-500";
       case "DIPROSES":
         return "bg-blue-500";
       case "SELESAI":
