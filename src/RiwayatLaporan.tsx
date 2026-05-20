@@ -59,7 +59,7 @@ const RiwayatLaporan: React.FC<Props> = ({ onBack, onLihatDetail }) => {
         </div>
         <button
           onClick={onBack}
-          className="bg-red-500 text-white px-10 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-100 hover:bg-red-600 active:scale-95 transition-all"
+          className="bg-gray-200 text-gray-700 px-10 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-md hover:bg-gray-300 active:scale-95 transition-all"
         >
           Kembali
         </button>
@@ -93,9 +93,10 @@ const RiwayatLaporan: React.FC<Props> = ({ onBack, onLihatDetail }) => {
                 </span>
               </div>
 
+              {/* PERBAIKAN DI SINI: Mengubah item.deskripsi menjadi item.isi_laporan agar sesuai database */}
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                 <p className="text-gray-500 text-sm leading-relaxed italic line-clamp-2">
-                  "{item.deskripsi || "Tidak ada deskripsi tambahan..."}"
+                  "{item.isi_laporan || "Tidak ada deskripsi tambahan..."}"
                 </p>
               </div>
 

@@ -19,10 +19,11 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       });
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         sessionStorage.setItem("user", JSON.stringify(data.user));
         onLogin(data.user.role);
       } else {
+        // PERBAIKAN: Menangkap dan memunculkan pesan error penolakan 'PENDING' dari backend secara akurat
         alert(data.message || "Email atau Password salah!");
       }
     } catch (error) {
@@ -41,7 +42,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-[90%] max-w-[420px] border border-white/20 text-center flex flex-col items-center relative z-10">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-white font-black text-4x2 tracking-tighter italic uppercase">
+          <h1 className="text-white font-black text-4xl tracking-tighter italic uppercase">
             Sistem Pengaduan Masalah
           </h1>
           <p className="text-white/70 text-[10px] mt-2 font-bold uppercase tracking-[0.4em]">
@@ -49,7 +50,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
           </p>
         </div>
 
-        {/* Logo Section - Dibuat mencolok dengan kontainer putih solid */}
+        {/* Logo Section */}
         <div className="group mb-10">
           <div className="w-32 h-32 bg-white rounded-[35px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-center p-4 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 cursor-pointer">
             <img

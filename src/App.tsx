@@ -14,6 +14,8 @@ import AdminLihatLaporan from "./AdminLihatLaporan";
 import AdminDetailLaporan from "./AdminDetailLaporan";
 import AdminLihatKonsultasi from "./AdminLihatKonsultasi";
 import AdminDetailKonsultasi from "./AdminDetailKonsultasi";
+// PERBAIKAN 1: Import komponen verifikasi akun baru yang telah kita buat
+import AdminVerifikasiSiswa from "./AdminVerifikasiSiswa";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -117,7 +119,6 @@ const App: React.FC = () => {
       {currentPage === "riwayat_konsultasi" && (
         <RiwayatKonsultasi
           onBack={() => setCurrentPage("beranda")}
-          // PERBAIKAN: Menggunakan onDetail agar sinkron dengan file RiwayatKonsultasi.tsx
           onDetail={(item: any) => {
             setPreviousPage("riwayat_konsultasi");
             setSelectedData(item);
@@ -159,7 +160,14 @@ const App: React.FC = () => {
           onLogout={handleLogout}
           onGoLaporan={() => setCurrentPage("admin_lihat_laporan")}
           onGoKonsultasi={() => setCurrentPage("admin_lihat_konsultasi")}
+          // PERBAIKAN 2: Mengaktifkan fungsi lempar navigasi saat tombol Verifikasi diklik di BerandaAdmin
+          onGoVerifikasi={() => setCurrentPage("admin_verifikasi_siswa")}
         />
+      )}
+
+      {/* PERBAIKAN 3: Menambahkan blok penayangan halaman Verifikasi Akun Siswa untuk Admin */}
+      {currentPage === "admin_verifikasi_siswa" && (
+        <AdminVerifikasiSiswa onBack={() => setCurrentPage("admin_beranda")} />
       )}
 
       {/* --- ROUTING KEPALA SEKOLAH --- */}

@@ -4,12 +4,14 @@ interface AdminProps {
   onLogout: () => void;
   onGoLaporan: () => void;
   onGoKonsultasi: () => void;
+  onGoVerifikasi: () => void; // PENAMBAHAN: Properti navigasi untuk memicu halaman verifikasi siswa
 }
 
 const BerandaAdmin: React.FC<AdminProps> = ({
   onLogout,
   onGoLaporan,
   onGoKonsultasi,
+  onGoVerifikasi,
 }) => {
   const [stats, setStats] = useState({
     totalPengaduan: 0,
@@ -57,6 +59,13 @@ const BerandaAdmin: React.FC<AdminProps> = ({
         <div className="flex items-center gap-8 font-bold text-sm text-[#1e3a8a]">
           <button className="border-b-2 border-[#1e3a8a] pb-1 uppercase tracking-widest">
             Beranda
+          </button>
+          {/* PENAMBAHAN: Tombol Navigasi Verifikasi Akun Baru yang Selaras dengan Tema Desain */}
+          <button
+            onClick={onGoVerifikasi}
+            className="opacity-40 hover:opacity-100 uppercase transition-all tracking-widest"
+          >
+            Verifikasi
           </button>
           <button
             onClick={onGoLaporan}

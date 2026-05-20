@@ -32,7 +32,13 @@ const storage = multer.diskStorage({
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    cb(
+      null,
+      Date.now() +
+        "-" +
+        Math.round(Math.random() * 1e9) +
+        path.extname(file.originalname),
+    );
   },
 });
 const upload = multer({ storage: storage });
@@ -42,7 +48,7 @@ const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASS || "",
-  database: process.env.DB_NAME || "dbtridharma",
+  database: process.env.DB_NAME || "db_sim",
 });
 
 db.connect((err) => {
@@ -53,16 +59,26 @@ db.connect((err) => {
   console.log(`✅ Server & Database dbtridharma AKTIF!`);
 });
 
-// --- [ AUTH ] ---
+// --- [ AUTH - PERBAIKAN PROTEKSI VERIFIKASI AKUN ADMIN BK ] ---
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   db.query(
     "SELECT * FROM users WHERE email = ? AND password = ?",
     [email, password],
     (err, result) => {
-      if (err) return res.status(500).json({ error: "Server Error" });
+      if (err) return res.status(500).json({ success: false, error: "Server Error" });
       if (result.length > 0) {
-        res.json({ success: true, user: result[0] });
+        const user = result[0];
+
+        // VALIDASI KUNCI: Jika status akun siswa masih PENDING, blokir login demi keamanan internal sekolah
+        if (user.role === "siswa" && user.status_aktif === "PENDING") {
+          return res.status(403).json({ 
+            success: false, 
+            message: "Maaf, akun Anda belum aktif. Silakan hubungi Admin / Guru BK di sekolah untuk memproses verifikasi berkas pendaftaran Anda!" 
+          });
+        }
+
+        res.json({ success: true, user: user });
       } else {
         res.json({ success: false, message: "Email atau Password salah!" });
       }
@@ -72,25 +88,36 @@ app.post("/api/login", (req, res) => {
 
 app.post("/api/register", (req, res) => {
   const { nama, email, password, kelas } = req.body;
+  // SUDAH SINKRON: Menyisipkan status_aktif 'PENDING' sebagai nilai bawaan awal pendaftaran siswa
   db.query(
-    "INSERT INTO users (nama, email, password, kelas, role) VALUES (?, ?, ?, ?, 'siswa')",
+    "INSERT INTO users (nama, email, password, kelas, role, status_aktif) VALUES (?, ?, ?, ?, 'siswa', 'PENDING')",
     [nama, email, password, kelas],
     (err) => {
-      if (err)
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(400).json({ success: false, message: "Email sudah terdaftar!" });
+        }
         return res.status(500).json({ success: false, error: err.message });
-      res.json({ success: true });
+      }
+      res.json({ success: true, message: "Registrasi sukses, tunggu verifikasi admin!" });
     },
   );
 });
 
 // --- [ PENGADUAN ] ---
-app.post("/api/laporan", upload.single("foto"), (req, res) => {
+app.post("/api/laporan", upload.array("foto", 4), (req, res) => {
   const { id_siswa, kategori, isi_laporan } = req.body;
-  const foto = req.file ? req.file.filename : null;
+
+  let fotoString = null;
+  if (req.files && req.files.length > 0) {
+    const fileNames = req.files.map((file) => file.filename);
+    fotoString = fileNames.join(",");
+  }
+
   const tanggal = new Date().toISOString().split("T")[0];
   db.query(
     "INSERT INTO laporan (id_siswa, kategori, isi_laporan, foto, tanggal_lapor, status) VALUES (?, ?, ?, ?, ?, 'TERKIRIM')",
-    [id_siswa, kategori, isi_laporan, foto, tanggal],
+    [id_siswa, kategori, isi_laporan, fotoString, tanggal],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
@@ -148,7 +175,6 @@ app.get("/api/admin/stats", (req, res) => {
   const qK =
     "SELECT COUNT(*) as total, SUM(status='SELESAI') as selesai FROM konsultasi WHERE MONTH(tanggal) = ? AND YEAR(tanggal) = ?";
 
-  // Query tambahan untuk statistik kategori (Bullying, Fasilitas, dll)
   const qCat =
     "SELECT kategori, COUNT(*) as jumlah FROM laporan WHERE MONTH(tanggal_lapor) = ? AND YEAR(tanggal_lapor) = ? GROUP BY kategori";
 
@@ -164,7 +190,6 @@ app.get("/api/admin/stats", (req, res) => {
         const dataLapor = resL[0] || { total: 0, selesai: 0 };
         const dataKonsul = resK[0] || { total: 0, selesai: 0 };
 
-        // Inisialisasi kategori agar jika kosong tetap bernilai 0
         const kategoriStats = {
           BULLYING: 0,
           FASILITAS: 0,
@@ -271,8 +296,39 @@ app.put("/api/admin/update-konsultasi/:id", (req, res) => {
   });
 });
 
+// --- [ ENDPOINT KELOLA VERIFIKASI SISWA UNTUK ADMIN BK ] ---
+
+// 1. Endpoint mendapatkan seluruh data siswa baru berstatus PENDING
+app.get("/api/admin/siswa-pending", (req, res) => {
+  const sql = "SELECT id, nama, email, kelas, created_at FROM users WHERE role = 'siswa' AND status_aktif = 'PENDING' ORDER BY id DESC";
+  db.query(sql, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result);
+  });
+});
+
+// 2. Endpoint Aksi Setujui (Mengaktifkan status_aktif akun menjadi 'AKTIF')
+app.put("/api/admin/verifikasi-siswa/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "UPDATE users SET status_aktif = 'AKTIF' WHERE id = ?";
+  db.query(sql, [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: "Akun siswa berhasil diaktifkan!" });
+  });
+});
+
+// 3. Endpoint Aksi Tolak & Hapus (Menghapus akun palsu/fiktif secara permanen)
+app.delete("/api/admin/tolak-siswa/:id", (req, res) => {
+  const { id } = req.params;
+  const sql = "DELETE FROM users WHERE id = ? AND status_aktif = 'PENDING'";
+  db.query(sql, [id], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: "Pendaftaran akun palsu berhasil dihapus." });
+  });
+});
+
+
 const PORT = 8080;
 app.listen(PORT, () =>
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`),
 );
-s;

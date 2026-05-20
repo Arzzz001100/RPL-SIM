@@ -28,6 +28,15 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
     }
   };
 
+  // Memecah string nama file dipisahkan koma dari database menjadi Array bersih
+  const dapatkanListFoto = (): string[] => {
+    if (!selectedData.foto) return [];
+    // Menghapus spasi jika ada dan memotong berdasarkan tanda koma
+    return selectedData.foto.split(",").filter(Boolean);
+  };
+
+  const listFoto = dapatkanListFoto();
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans text-left">
       <div className="max-w-4xl mx-auto">
@@ -80,7 +89,6 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                   <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
                     Dibuat
                   </label>
-                  {/* PERBAIKAN DI SINI: Memanggil fungsi formatTanggal */}
                   <p className="font-medium">
                     {formatTanggal(selectedData.tanggal_lapor)}
                   </p>
@@ -100,21 +108,29 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
 
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">
-                  Bukti Foto
+                  Bukti Foto ({listFoto.length})
                 </label>
-                {selectedData.foto ? (
-                  <div className="rounded-[30px] overflow-hidden border-4 border-gray-50 shadow-lg">
-                    <img
-                      src={`http://localhost:8080/uploads/${selectedData.foto}`}
-                      alt="Bukti Laporan"
-                      className="w-full h-48 object-cover cursor-pointer"
-                      onClick={() =>
-                        window.open(
-                          `http://localhost:8080/uploads/${selectedData.foto}`,
-                          "_blank",
-                        )
-                      }
-                    />
+                {listFoto.length > 0 ? (
+                  /* Grid Responsif Multi-Foto Mengikuti Jumlah Bukti yang Ada */
+                  <div className="grid grid-cols-2 gap-3">
+                    {listFoto.map((namaFile, index) => (
+                      <div 
+                        key={index} 
+                        className="rounded-[20px] overflow-hidden border-2 border-gray-50 shadow-md group relative bg-gray-100"
+                      >
+                        <img
+                          src={`http://localhost:8080/uploads/${namaFile}`}
+                          alt={`Bukti Laporan ${index + 1}`}
+                          className="w-full h-28 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                          onClick={() =>
+                            window.open(
+                              `http://localhost:8080/uploads/${namaFile}`,
+                              "_blank",
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="h-32 bg-gray-100 rounded-[30px] flex items-center justify-center border-2 border-dashed border-gray-200">

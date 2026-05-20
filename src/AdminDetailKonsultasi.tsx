@@ -12,12 +12,57 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
   const [status, setStatus] = useState(selectedData?.status || "MENUNGGU");
   const [loading, setLoading] = useState(false);
 
-  // --- [ PENGECEKAN ROLE TANPA UBAH DESAIN ] ---
+  // --- [ PENGECEKAN ROLE & STATUS KUNCI ] ---
   const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const isKepsek = user.role === "kepala sekolah";
+  
+  // Otomatis mengunci jika status dari database sudah SELESAI atau DITOLAK
+  const statusAwal = selectedData?.status?.toUpperCase();
+  const isTerkunciOtomatis = statusAwal === "SELESAI" || statusAwal === "DITOLAK";
+  
+  // Gabungkan semua kondisi pembatasan akses edit
+  const isDisabled = isKepsek || isTerkunciOtomatis;
 
   const handleUpdate = async () => {
-    if (isKepsek) return; // Mencegah eksekusi jika role kepsek
+    if (isDisabled) return; // Mencegah eksekusi jika role kepsek atau data sudah final (terkunci)
+
+    const trimmedLink = linkZoom.trim();
+    const trimmedPesan = pesan.trim();
+
+    // 1. Validasi Wajib Isi Link & Pesan jika status disetujui/proses (DITERIMA / SELESAI)
+    if (status === "DITERIMA" || status === "SELESAI") {
+      if (!trimmedLink) return alert("Link pertemuan online (Zoom/Google Meet) wajib diisi!");
+      if (!trimmedPesan) return alert("Pesan admin/catatan untuk siswa wajib diisi!");
+    }
+
+    // 2. Validasi Struktur Tautan Pertemuan Online (Wajib mengandung zoom.us atau meet.google.com)
+    if (trimmedLink) {
+      const meetRegex = /(zoom\.us|meet\.google\.com)/i;
+      if (!meetRegex.test(trimmedLink)) {
+        return alert("Tautan tidak valid! Masukkan Link Zoom atau Google Meet yang benar.");
+      }
+    }
+
+    // 3. Proteksi SUPER KETAT Anti-Spam & Keyboard Smash di Kolom Pesan Admin
+    if (trimmedPesan) {
+      if (trimmedPesan.length < 5) {
+        return alert("Pesan admin terlalu pendek! Berikan instruksi minimal 5 karakter.");
+      }
+
+      const spamPatternRegex = /(.{2,4})\1{1,}/i;
+      const keyboardSmashRegex = /[a-zA-Z]{15,}/;
+
+      if (spamPatternRegex.test(trimmedPesan) || keyboardSmashRegex.test(trimmedPesan)) {
+        return alert("Masukkan pesan admin yang valid dan jelas! Jangan mengetik asal-asalan.");
+      }
+
+      const hurufSaja = trimmedPesan.replace(/[^a-zA-Z]/g, "");
+      const kumpulanHurufUnik = Array.from(new Set(hurufSaja.toLowerCase()));
+      
+      if (hurufSaja.length >= 8 && kumpulanHurufUnik.length <= 4) {
+        return alert("Pesan admin terdeteksi berisi ketikan acak. Harap masukkan kalimat yang jelas dan mudah dipahami!");
+      }
+    }
 
     setLoading(true);
     try {
@@ -28,8 +73,8 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             jam,
-            link_zoom: linkZoom,
-            pesan_admin: pesan,
+            link_zoom: trimmedLink,
+            pesan_admin: trimmedPesan,
             status,
           }),
         },
@@ -37,6 +82,8 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
       if (res.ok) {
         alert("Data Konsultasi Berhasil Diperbarui!");
         onBack();
+      } else {
+        alert("Gagal memperbarui data konsultasi.");
       }
     } catch (err) {
       alert("Gagal terhubung ke server");
@@ -80,7 +127,7 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
               <input
                 type="time"
                 value={jam}
-                disabled={isKepsek}
+                disabled={isDisabled}
                 onChange={(e) => setJam(e.target.value)}
                 className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none disabled:opacity-50"
               />
@@ -91,7 +138,7 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
               </label>
               <select
                 value={status}
-                disabled={isKepsek}
+                disabled={isDisabled}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-bold text-gray-600 outline-none disabled:opacity-50"
               >
@@ -105,9 +152,9 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
 
           <input
             type="text"
-            placeholder="Link Zoom"
+            placeholder="Link Zoom / Google Meet"
             value={linkZoom}
-            disabled={isKepsek}
+            disabled={isDisabled}
             onChange={(e) => setLinkZoom(e.target.value)}
             className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 outline-none disabled:opacity-50"
           />
@@ -115,26 +162,28 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
           <textarea
             placeholder="Pesan admin..."
             value={pesan}
-            disabled={isKepsek}
+            disabled={isDisabled}
             onChange={(e) => setPesan(e.target.value)}
-            className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 h-24 outline-none disabled:opacity-50"
+            className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 h-24 outline-none disabled:opacity-50 resize-none"
           ></textarea>
 
-          {/* Kondisi Tombol: Jika Kepsek, ganti teks atau beri info tanpa ubah gaya tombol */}
+          {/* Dinamisasi Tombol: Mengunci klik & mengubah style warna jika data sudah berstatus SELESAI/DITOLAK atau user adalah KEPSEK */}
           <button
             onClick={handleUpdate}
-            disabled={loading || isKepsek}
+            disabled={loading || isDisabled}
             className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition-all ${
-              isKepsek
-                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+              isDisabled
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
                 : "bg-blue-900 text-white active:scale-95 hover:bg-black"
             }`}
           >
             {isKepsek
               ? "Monitoring"
-              : loading
-                ? "Loading..."
-                : "Simpan Perubahan"}
+              : isTerkunciOtomatis
+                ? "Data Terkunci (Final)"
+                : loading
+                  ? "Loading..."
+                  : "Simpan Perubahan"}
           </button>
         </div>
       </div>
