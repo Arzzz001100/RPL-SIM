@@ -94,12 +94,13 @@ app.post("/api/register", (req, res) => {
     [nama, email, password, kelas, security_question, security_answer],
     (err) => {
       if (err) {
+        console.error("❌ Register error:", err.message);
         if (err.code === 'ER_DUP_ENTRY') {
           return res.status(400).json({ success: false, message: "Email sudah terdaftar!" });
         }
         return res.status(500).json({ success: false, error: err.message });
-      res.json({ success: true });
       }
+      res.json({ success: true });
     }
   );
 });
