@@ -56,7 +56,7 @@ db.connect((err) => {
     console.error("❌ Koneksi Database Gagal:", err);
     return;
   }
-  console.log(`✅ Server & Database dbtridharma AKTIF!`);
+  console.log(`✅ Server & Database db_sim AKTIF!`);
 });
 
 // --- [ AUTH - PERBAIKAN PROTEKSI VERIFIKASI AKUN ADMIN BK ] ---
@@ -82,25 +82,97 @@ app.post("/api/login", (req, res) => {
       } else {
         res.json({ success: false, message: "Email atau Password salah!" });
       }
-    },
+    }
   );
 });
 
 app.post("/api/register", (req, res) => {
+<<<<<<< Updated upstream
   const { nama, email, password, kelas } = req.body;
   // SUDAH SINKRON: Menyisipkan status_aktif 'PENDING' sebagai nilai bawaan awal pendaftaran siswa
   db.query(
     "INSERT INTO users (nama, email, password, kelas, role, status_aktif) VALUES (?, ?, ?, ?, 'siswa', 'PENDING')",
     [nama, email, password, kelas],
+=======
+  const { nama, email, password, kelas, security_question, security_answer } =
+    req.body;
+  db.query(
+    "INSERT INTO users (nama, email, password, kelas, role, security_question, security_answer) VALUES (?, ?, ?, ?, 'siswa', ?, ?)",
+    [nama, email, password, kelas, security_question, security_answer],
+>>>>>>> Stashed changes
     (err) => {
       if (err) {
         if (err.code === 'ER_DUP_ENTRY') {
           return res.status(400).json({ success: false, message: "Email sudah terdaftar!" });
         }
         return res.status(500).json({ success: false, error: err.message });
+<<<<<<< Updated upstream
       }
       res.json({ success: true, message: "Registrasi sukses, tunggu verifikasi admin!" });
     },
+=======
+      res.json({ success: true });
+    }
+  );
+});
+
+// --- [ LUPA PASSWORD ] ---
+
+// Step 1: Ambil pertanyaan keamanan berdasarkan email
+app.get("/api/forgot-password/question", (req, res) => {
+  const { email } = req.query;
+  db.query(
+    "SELECT security_question FROM users WHERE email = ?",
+    [email],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (result.length === 0) {
+        return res.json({ success: false, message: "Email tidak ditemukan." });
+      }
+      const question = result[0].security_question;
+      if (!question) {
+        return res.json({
+          success: false,
+          message:
+            "Akun ini tidak memiliki pertanyaan keamanan. Hubungi admin.",
+        });
+      }
+      res.json({ success: true, security_question: question });
+    }
+  );
+});
+
+// Step 2: Verifikasi jawaban keamanan
+app.post("/api/forgot-password/verify", (req, res) => {
+  const { email, security_answer } = req.body;
+  db.query(
+    "SELECT id FROM users WHERE email = ? AND LOWER(security_answer) = LOWER(?)",
+    [email, security_answer],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (result.length > 0) {
+        res.json({ success: true, id: result[0].id });
+      } else {
+        res.json({
+          success: false,
+          message: "Jawaban keamanan salah. Coba lagi.",
+        });
+      }
+    }
+  );
+});
+
+// Step 3: Reset password
+app.post("/api/forgot-password/reset", (req, res) => {
+  const { id, new_password } = req.body;
+  db.query(
+    "UPDATE users SET password = ? WHERE id = ?",
+    [new_password, id],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    }
+>>>>>>> Stashed changes
   );
 });
 
@@ -121,7 +193,7 @@ app.post("/api/laporan", upload.array("foto", 4), (req, res) => {
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
-    },
+    }
   );
 });
 
@@ -132,7 +204,7 @@ app.get("/api/laporan/user/:id_siswa", (req, res) => {
     (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json(result);
-    },
+    }
   );
 });
 
@@ -152,7 +224,7 @@ app.post("/api/konsultasi", (req, res) => {
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
-    },
+    }
   );
 });
 
@@ -251,7 +323,7 @@ app.put("/api/admin/update-laporan/:id", (req, res) => {
           });
         }
         res.json({ success: true });
-      },
+      }
     );
   });
 });
@@ -291,7 +363,7 @@ app.put("/api/admin/update-konsultasi/:id", (req, res) => {
           });
         }
         res.json({ success: true });
-      },
+      }
     );
   });
 });
@@ -330,5 +402,10 @@ app.delete("/api/admin/tolak-siswa/:id", (req, res) => {
 
 const PORT = 8080;
 app.listen(PORT, () =>
+<<<<<<< Updated upstream
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`),
 );
+=======
+  console.log(`🚀 Server berjalan di http://localhost:${PORT}`)
+);
+>>>>>>> Stashed changes

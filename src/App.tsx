@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Login from "./Login";
 import Register from "./Register";
+import LupaPassword from "./LupaPassword";
 import Beranda from "./Beranda";
 import Laporan from "./Laporan";
 import Konsultasi from "./Konsultasi";
@@ -62,17 +63,30 @@ const App: React.FC = () => {
     setCurrentPage("login");
   };
 
-  if (!user && currentPage !== "register") {
+  // Halaman yang bisa diakses tanpa login
+  const publicPages = ["register", "lupa_password"];
+
+  if (!user && !publicPages.includes(currentPage)) {
     return (
       <Login
         onSwitch={() => setCurrentPage("register")}
         onLogin={handleLogin}
+        onLupaPassword={() => setCurrentPage("lupa_password")}
       />
     );
   }
 
   return (
     <div className="App">
+      {/* --- AUTH --- */}
+      {currentPage === "register" && (
+        <Register onSwitch={() => setCurrentPage("login")} />
+      )}
+
+      {currentPage === "lupa_password" && (
+        <LupaPassword onBack={() => setCurrentPage("login")} />
+      )}
+
       {/* --- ROUTING SISWA --- */}
       {currentPage === "beranda" && (
         <Beranda
@@ -184,7 +198,7 @@ const App: React.FC = () => {
         <AdminLihatLaporan
           onBack={() => {
             setCurrentPage(
-              user.role === "admin" ? "admin_beranda" : "kepsek_beranda",
+              user.role === "admin" ? "admin_beranda" : "kepsek_beranda"
             );
           }}
           onDetail={(item: any) => {
@@ -205,7 +219,7 @@ const App: React.FC = () => {
         <AdminLihatKonsultasi
           onBack={() => {
             setCurrentPage(
-              user.role === "admin" ? "admin_beranda" : "kepsek_beranda",
+              user.role === "admin" ? "admin_beranda" : "kepsek_beranda"
             );
           }}
           onDetail={(item: any) => {
@@ -220,11 +234,6 @@ const App: React.FC = () => {
           onBack={() => setCurrentPage("admin_lihat_konsultasi")}
           selectedData={selectedData}
         />
-      )}
-
-      {/* --- AUTH --- */}
-      {currentPage === "register" && (
-        <Register onSwitch={() => setCurrentPage("login")} />
       )}
     </div>
   );

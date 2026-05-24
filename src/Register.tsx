@@ -4,6 +4,7 @@ interface Props {
   onSwitch: () => void;
 }
 
+<<<<<<< Updated upstream
 interface FormErrors {
   nama?: string;
   kelas?: string;
@@ -11,12 +12,22 @@ interface FormErrors {
   password?: string;
   confirmPassword?: string;
 }
+=======
+const SECURITY_QUESTIONS = [
+  "Siapa nama lengkap ibu kandungmu?",
+  "Di SD mana kamu bersekolah dulu?",
+  "Apa nama hewan peliharaan pertamamu?",
+  "Apa nama kota kelahiranmu?",
+  "Siapa nama guru SD favoritmu?",
+];
+>>>>>>> Stashed changes
 
 const Register: React.FC<Props> = ({ onSwitch }) => {
   const [nama, setNama] = useState("");
   const [kelas, setKelas] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+<<<<<<< Updated upstream
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
@@ -118,15 +129,35 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
     if (!validate()) return;
 
     setLoading(true);
+=======
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!securityQuestion) {
+      alert("Pilih pertanyaan keamanan terlebih dahulu!");
+      return;
+    }
+>>>>>>> Stashed changes
     try {
       const response = await fetch("http://localhost:8080/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+<<<<<<< Updated upstream
           nama: nama.trim(),
           email: email.trim().toLowerCase(),
           password,
           kelas,
+=======
+          nama,
+          email,
+          password,
+          kelas,
+          security_question: securityQuestion,
+          security_answer: securityAnswer,
+>>>>>>> Stashed changes
         }),
       });
       const data = await response.json();
@@ -159,6 +190,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
   // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
+<<<<<<< Updated upstream
     <div className="fixed inset-0 flex items-center justify-center bg-[#1e3a8a]">
       {/* Tag style untuk menyembunyikan scrollbar tanpa merusak layout */}
       <style>{`
@@ -166,11 +198,18 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
+=======
+    <div className="fixed inset-0 flex items-center justify-center bg-[#1e3a8a] overflow-y-auto py-8">
+>>>>>>> Stashed changes
       {/* Dekorasi Background */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-black/20 rounded-full -ml-20 -mb-20 blur-3xl"></div>
 
+<<<<<<< Updated upstream
       <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-[90%] max-w-[450px] border border-white/20 flex flex-col items-center relative z-10 max-h-[95vh] overflow-y-auto hide-scrollbar">
+=======
+      <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-[90%] max-w-[450px] border border-white/20 flex flex-col items-center relative z-10 my-auto">
+>>>>>>> Stashed changes
         <div className="mb-8 text-center">
           <h1 className="text-white font-black text-4xl tracking-tighter italic uppercase">
             Daftar Akun
@@ -374,6 +413,60 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
                 {errors.confirmPassword}
               </p>
             )}
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 py-1">
+            <div className="flex-1 h-px bg-white/10"></div>
+            <span className="text-white/30 text-[9px] font-black uppercase tracking-widest">
+              Keamanan Akun
+            </span>
+            <div className="flex-1 h-px bg-white/10"></div>
+          </div>
+
+          {/* Pertanyaan Keamanan */}
+          <div className="space-y-1">
+            <label className="text-white/70 text-[10px] font-black uppercase tracking-widest ml-4">
+              Pertanyaan Keamanan
+            </label>
+            <div className="relative">
+              <select
+                value={securityQuestion}
+                onChange={(e) => setSecurityQuestion(e.target.value)}
+                className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all appearance-none cursor-pointer text-sm"
+                required
+              >
+                <option value="" disabled className="bg-[#1e3a8a]">
+                  Pilih pertanyaan keamanan
+                </option>
+                {SECURITY_QUESTIONS.map((q) => (
+                  <option key={q} value={q} className="bg-[#1e3a8a]">
+                    {q}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          {/* Jawaban Keamanan */}
+          <div className="space-y-1">
+            <label className="text-white/70 text-[10px] font-black uppercase tracking-widest ml-4">
+              Jawaban Keamanan
+            </label>
+            <input
+              type="text"
+              placeholder="Jawaban yang mudah kamu ingat"
+              value={securityAnswer}
+              onChange={(e) => setSecurityAnswer(e.target.value)}
+              className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
+              required
+            />
+            <p className="text-white/30 text-[9px] ml-4 mt-1">
+              Digunakan jika kamu lupa password. Ingat jawabanmu dengan baik!
+            </p>
           </div>
 
           <button

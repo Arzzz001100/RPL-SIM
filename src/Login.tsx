@@ -3,9 +3,10 @@ import React, { useState } from "react";
 interface Props {
   onSwitch: () => void;
   onLogin: (role: string) => void;
+  onLupaPassword: () => void;
 }
 
-const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
+const Login: React.FC<Props> = ({ onSwitch, onLogin, onLupaPassword }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -28,7 +29,7 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
       }
     } catch (error) {
       alert(
-        "Gagal terhubung ke server. Pastikan backend di port 8080 menyala.",
+        "Gagal terhubung ke server. Pastikan backend di port 8080 menyala."
       );
     }
   };
@@ -85,6 +86,17 @@ const Login: React.FC<Props> = ({ onSwitch, onLogin }) => {
               className="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-white/40 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
               required
             />
+          </div>
+
+          {/* Link Lupa Password */}
+          <div className="text-right -mt-2">
+            <button
+              type="button"
+              onClick={onLupaPassword}
+              className="text-white/50 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all"
+            >
+              Lupa Password?
+            </button>
           </div>
 
           <button
