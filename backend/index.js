@@ -87,31 +87,19 @@ app.post("/api/login", (req, res) => {
 });
 
 app.post("/api/register", (req, res) => {
-<<<<<<< Updated upstream
-  const { nama, email, password, kelas } = req.body;
-  // SUDAH SINKRON: Menyisipkan status_aktif 'PENDING' sebagai nilai bawaan awal pendaftaran siswa
-  db.query(
-    "INSERT INTO users (nama, email, password, kelas, role, status_aktif) VALUES (?, ?, ?, ?, 'siswa', 'PENDING')",
-    [nama, email, password, kelas],
-=======
   const { nama, email, password, kelas, security_question, security_answer } =
     req.body;
   db.query(
     "INSERT INTO users (nama, email, password, kelas, role, security_question, security_answer) VALUES (?, ?, ?, ?, 'siswa', ?, ?)",
     [nama, email, password, kelas, security_question, security_answer],
->>>>>>> Stashed changes
     (err) => {
       if (err) {
         if (err.code === 'ER_DUP_ENTRY') {
           return res.status(400).json({ success: false, message: "Email sudah terdaftar!" });
         }
         return res.status(500).json({ success: false, error: err.message });
-<<<<<<< Updated upstream
-      }
-      res.json({ success: true, message: "Registrasi sukses, tunggu verifikasi admin!" });
-    },
-=======
       res.json({ success: true });
+      }
     }
   );
 });
@@ -172,7 +160,6 @@ app.post("/api/forgot-password/reset", (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
     }
->>>>>>> Stashed changes
   );
 });
 
@@ -402,10 +389,5 @@ app.delete("/api/admin/tolak-siswa/:id", (req, res) => {
 
 const PORT = 8080;
 app.listen(PORT, () =>
-<<<<<<< Updated upstream
-  console.log(`🚀 Server berjalan di http://localhost:${PORT}`),
-);
-=======
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`)
 );
->>>>>>> Stashed changes
