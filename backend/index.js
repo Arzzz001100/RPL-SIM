@@ -45,11 +45,11 @@ const upload = multer({ storage: storage });
 
 // 2. Koneksi Database
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
+  host: process.env.DB_HOST || "acela.proxy.rlwy.net",
   user: process.env.DB_USER || "root",
-  password: process.env.DB_PASS || "",
-  database: process.env.DB_NAME || "db_sim",
-  port: process.env.DB_PORT || 3306  // ← tambahkan ini
+  password: process.env.DB_PASS || "jTgtAcDGTCZrUeHowbRJVHWrliztvJCd",
+  database: process.env.DB_NAME || "railway",  // ← ganti db_sim jadi railway
+  port: process.env.DB_PORT || 35174  // ← ganti 3306 jadi 35174
 });
 
 db.connect((err) => {
