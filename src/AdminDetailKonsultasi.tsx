@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import API_BASE from "./api";
 
 interface Props {
   onBack: () => void;
