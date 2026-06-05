@@ -14,25 +14,29 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
     );
   }
 
-  // Fungsi untuk memformat tanggal agar hanya muncul Tanggal, Bulan, Tahun
+  // Perbaikan 1: Validasi string tanggal agar terhindar dari tulisan "Invalid Date"
   const formatTanggal = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
-    } catch (e) {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
       return dateString;
     }
+
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
   };
 
-  // Memecah string nama file dipisahkan koma dari database menjadi Array bersih
+  // Perbaikan 2: Memangkas spasi putih sebelum/sesudah koma agar link gambar tidak rusak (%20)
   const dapatkanListFoto = (): string[] => {
     if (!selectedData.foto) return [];
-    // Menghapus spasi jika ada dan memotong berdasarkan tanda koma
-    return selectedData.foto.split(",").filter(Boolean);
+    return selectedData.foto
+      .split(",")
+      .map((item: string) => item.trim()) // Menghapus spasi di awal/akhir string file
+      .filter(Boolean); // Membuang string kosong jika ada koma ganda
   };
 
   const listFoto = dapatkanListFoto();
@@ -52,7 +56,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
               Detail Pengaduan
             </h2>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
-              ID Kasus: #{selectedData.id}
+              ID Kasus: #{selectedData.id || "0"}
             </p>
           </div>
         </div>
@@ -66,7 +70,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     Status Pengaduan
                   </label>
                   <span className="bg-blue-500 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
-                    {selectedData.status}
+                    {selectedData.status || "PENDING"}
                   </span>
                 </div>
                 <div>
@@ -74,7 +78,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     Nama Pelapor
                   </label>
                   <p className="text-xl font-bold uppercase">
-                    {selectedData.nama || selectedData.nama_pelapor || "Siswa"}
+                    {selectedData.nama || selectedData.nama_pelapor || "Siswa Rahasia (Anonim)"}
                   </p>
                 </div>
                 <div>
@@ -82,7 +86,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     Kategori Masalah
                   </label>
                   <p className="text-lg font-bold text-orange-400 uppercase italic">
-                    {selectedData.kategori}
+                    {selectedData.kategori || "LAINNYA"}
                   </p>
                 </div>
                 <div>
@@ -90,7 +94,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     Dibuat
                   </label>
                   <p className="font-medium">
-                    {formatTanggal(selectedData.tanggal_lapor)}
+                    {formatTanggal(selectedData.tanggal_lapor || selectedData.tanggal)}
                   </p>
                 </div>
               </div>
@@ -102,7 +106,7 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                   Deskripsi Masalah
                 </label>
                 <div className="bg-gray-50 p-6 rounded-[30px] border border-gray-100 italic text-gray-600 leading-relaxed">
-                  "{selectedData.isi_laporan}"
+                  "{selectedData.isi_laporan || "Tidak ada rincian deskripsi."}"
                 </div>
               </div>
 
@@ -111,7 +115,6 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                   Bukti Foto ({listFoto.length})
                 </label>
                 {listFoto.length > 0 ? (
-                  /* Grid Responsif Multi-Foto Mengikuti Jumlah Bukti yang Ada */
                   <div className="grid grid-cols-2 gap-3">
                     {listFoto.map((namaFile, index) => (
                       <div 
@@ -128,6 +131,10 @@ const DetailLaporan: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                               "_blank",
                             )
                           }
+                          onError={(e) => {
+                            // Penanganan alternatif jika file fisik gambar tidak ditemukan di backend
+                            (e.target as HTMLImageElement).src = "https://placehold.co/600x400?text=Gambar+Rusak";
+                          }}
                         />
                       </div>
                     ))}

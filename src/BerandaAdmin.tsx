@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
+import API_BASE from "./api"; // Menggunakan konfigurasi alamat port global pusat
 
 interface AdminProps {
   onLogout: () => void;
   onGoLaporan: () => void;
   onGoKonsultasi: () => void;
-  onGoVerifikasi: () => void; // PENAMBAHAN: Properti navigasi untuk memicu halaman verifikasi siswa
+  onGoVerifikasi: () => void; // Navigasi untuk memicu halaman verifikasi siswa
 }
 
 const BerandaAdmin: React.FC<AdminProps> = ({
@@ -20,21 +21,25 @@ const BerandaAdmin: React.FC<AdminProps> = ({
     konsultasiSelesai: 0,
   });
 
+  // Default menggunakan bulan dan tahun saat ini (Juni 2026)
   const [bulan, setBulan] = useState<number>(new Date().getMonth() + 1);
   const [tahun, setTahun] = useState<number>(new Date().getFullYear());
 
   const fetchStats = useCallback(async () => {
     try {
+      // PERBAIKAN UTAMA: Tambahkan parameter &all=true agar backend tahu kita ingin mengambil semua data jika filter bulan/tahun tidak cocok
       const res = await fetch(
-        `http://localhost:8080/api/admin/stats?bulan=${bulan}&tahun=${tahun}`,
+        `${API_BASE}/api/admin/stats?bulan=${bulan}&tahun=${tahun}&all=true`,
       );
       if (!res.ok) throw new Error("Gagal memuat data");
       const data = await res.json();
+      
+      // Menyelaraskan mapping key dari database backend (mengantisipasi snake_case dan camelCase)
       setStats({
-        totalPengaduan: data.totalPengaduan || 0,
-        pengaduanSelesai: data.pengaduanSelesai || 0,
-        totalKonsultasi: data.totalKonsultasi || 0,
-        konsultasiSelesai: data.konsultasiSelesai || 0,
+        totalPengaduan: data.total_pengaduan ?? data.totalPengaduan ?? 0,
+        pengaduanSelesai: data.pengaduan_selesai ?? data.pengaduanSelesai ?? 0,
+        totalKonsultasi: data.total_konsultasi ?? data.totalKonsultasi ?? 0,
+        konsultasiSelesai: data.konsultasi_selesai ?? data.konsultasiSelesai ?? 0,
       });
     } catch (err) {
       console.error("Gagal ambil stats:", err);
@@ -43,11 +48,15 @@ const BerandaAdmin: React.FC<AdminProps> = ({
 
   useEffect(() => {
     fetchStats();
+
+    // AUTO-UPDATE: Terus memantau database setiap 5 detik. Jika ada pengaduan baru masuk, angka otomatis bertambah.
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
   }, [fetchStats]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans text-left pb-20 relative overflow-hidden">
-      {/* Background Decor untuk memperkuat efek Glassmorphism */}
+      {/* Background Decor */}
       <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-[120px] -z-10"></div>
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-teal-100/40 rounded-full blur-[100px] -z-10"></div>
 
@@ -60,7 +69,6 @@ const BerandaAdmin: React.FC<AdminProps> = ({
           <button className="border-b-2 border-[#1e3a8a] pb-1 uppercase tracking-widest">
             Beranda
           </button>
-          {/* PENAMBAHAN: Tombol Navigasi Verifikasi Akun Baru yang Selaras dengan Tema Desain */}
           <button
             onClick={onGoVerifikasi}
             className="opacity-40 hover:opacity-100 uppercase transition-all tracking-widest"
@@ -107,7 +115,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
         </div>
       </div>
 
-      {/* FILTER PERIODE - Glassmorphism Style */}
+      {/* FILTER PERIODE */}
       <div className="mx-10 mt-10 flex items-center justify-between p-8 bg-white/40 backdrop-blur-xl rounded-[35px] border border-white/60 shadow-xl">
         <div className="border-l-4 border-[#1e3a8a] pl-5">
           <h3 className="text-sm font-black text-[#1e3a8a] uppercase italic">
@@ -124,18 +132,8 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             className="px-6 py-3 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/80 text-xs font-black uppercase outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all cursor-pointer"
           >
             {[
-              "Januari",
-              "Februari",
-              "Maret",
-              "April",
-              "Mei",
-              "Juni",
-              "Juli",
-              "Agustus",
-              "September",
-              "Oktober",
-              "November",
-              "Desember",
+              "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+              "Juli", "Agustus", "September", "Oktober", "November", "Desember"
             ].map((m, i) => (
               <option key={i} value={i + 1}>
                 {m}
@@ -147,7 +145,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
             onChange={(e) => setTahun(Number(e.target.value))}
             className="px-6 py-3 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/80 text-xs font-black uppercase outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 transition-all cursor-pointer"
           >
-            {[2026, 2027, 2028, 2029, 2030].map((y) => (
+            {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
@@ -156,9 +154,9 @@ const BerandaAdmin: React.FC<AdminProps> = ({
         </div>
       </div>
 
-      {/* STATS CARDS - Glassmorphism Aesthetic */}
+      {/* STATS CARDS */}
       <div className="mx-10 mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        {/* Card: Total Pengaduan (BIRU) */}
+        {/* Total Pengaduan */}
         <div
           onClick={onGoLaporan}
           className="group relative bg-white/40 backdrop-blur-2xl p-10 rounded-[45px] shadow-xl border border-white/60 flex flex-col items-center justify-center cursor-pointer hover:bg-white/60 hover:-translate-y-2 transition-all duration-500"
@@ -173,8 +171,11 @@ const BerandaAdmin: React.FC<AdminProps> = ({
           <div className="mt-4 w-12 h-1.5 bg-[#1e3a8a] rounded-full relative z-10 shadow-sm shadow-[#1e3a8a]/40"></div>
         </div>
 
-        {/* Card: Pengaduan Selesai (TEAL/EMERALD) */}
-        <div className="group relative bg-white/40 backdrop-blur-2xl p-10 rounded-[45px] shadow-xl border border-white/60 flex flex-col items-center justify-center transition-all duration-500 hover:bg-white/60 hover:-translate-y-2">
+        {/* Pengaduan Selesai */}
+        <div 
+          onClick={onGoLaporan}
+          className="group relative bg-white/40 backdrop-blur-2xl p-10 rounded-[45px] shadow-xl border border-white/60 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 hover:bg-white/60 hover:-translate-y-2"
+        >
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl group-hover:bg-teal-500/20 transition-all"></div>
           <p className="text-[10px] font-black text-teal-600/50 uppercase mb-4 tracking-[0.2em] relative z-10 text-center">
             Pengaduan Selesai
@@ -185,7 +186,7 @@ const BerandaAdmin: React.FC<AdminProps> = ({
           <div className="mt-4 w-12 h-1.5 bg-[#0d9488] rounded-full relative z-10 shadow-sm shadow-teal-500/40"></div>
         </div>
 
-        {/* Card: Total Konsultasi (BIRU) */}
+        {/* Total Konsultasi */}
         <div
           onClick={onGoKonsultasi}
           className="group relative bg-white/40 backdrop-blur-2xl p-10 rounded-[45px] shadow-xl border border-white/60 flex flex-col items-center justify-center cursor-pointer hover:bg-white/60 hover:-translate-y-2 transition-all duration-500"
@@ -200,8 +201,11 @@ const BerandaAdmin: React.FC<AdminProps> = ({
           <div className="mt-4 w-12 h-1.5 bg-[#1e3a8a] rounded-full relative z-10 shadow-sm shadow-[#1e3a8a]/40"></div>
         </div>
 
-        {/* Card: Konsultasi Selesai (TEAL/EMERALD) */}
-        <div className="group relative bg-white/40 backdrop-blur-2xl p-10 rounded-[45px] shadow-xl border border-white/60 flex flex-col items-center justify-center transition-all duration-500 hover:bg-white/60 hover:-translate-y-2">
+        {/* Konsultasi Selesai */}
+        <div 
+          onClick={onGoKonsultasi}
+          className="group relative bg-white/40 backdrop-blur-2xl p-10 rounded-[45px] shadow-xl border border-white/60 flex flex-col items-center justify-center cursor-pointer transition-all duration-500 hover:bg-white/60 hover:-translate-y-2"
+        >
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl group-hover:bg-teal-500/20 transition-all"></div>
           <p className="text-[10px] font-black text-teal-600/50 uppercase mb-4 tracking-[0.2em] relative z-10 text-center">
             Konsultasi Selesai

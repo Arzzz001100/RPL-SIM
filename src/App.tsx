@@ -10,12 +10,11 @@ import BerandaKepsek from "./BerandaKepsek";
 import RiwayatLaporan from "./RiwayatLaporan";
 import RiwayatKonsultasi from "./RiwayatKonsultasi";
 import DetailLaporan from "./DetailLaporan";
-import DetailKonsultasi from "./DetailKonsultasi";
+import DetailKonsultasi from "./DetailKonsultasi"; // Nama komponen dasar
 import AdminLihatLaporan from "./AdminLihatLaporan";
 import AdminDetailLaporan from "./AdminDetailLaporan";
 import AdminLihatKonsultasi from "./AdminLihatKonsultasi";
 import AdminDetailKonsultasi from "./AdminDetailKonsultasi";
-// PERBAIKAN 1: Import komponen verifikasi akun baru yang telah kita buat
 import AdminVerifikasiSiswa from "./AdminVerifikasiSiswa";
 
 const App: React.FC = () => {
@@ -32,6 +31,7 @@ const App: React.FC = () => {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
 
+      // Sinkronisasi halaman otomatis saat aplikasi di-refresh berdasarkan role pengguna
       if (parsedUser.role === "admin") {
         setCurrentPage("admin_beranda");
       } else if (parsedUser.role === "kepala sekolah") {
@@ -40,7 +40,11 @@ const App: React.FC = () => {
         setCurrentPage("beranda");
       }
     } else {
-      setCurrentPage("login");
+      // Jika tidak ada sesi aktif, paksa ke halaman login kecuali sedang di halaman publik
+      const publicPages = ["register", "lupa_password"];
+      if (!publicPages.includes(currentPage)) {
+        setCurrentPage("login");
+      }
     }
   }, []);
 
@@ -156,7 +160,7 @@ const App: React.FC = () => {
       )}
 
       {currentPage === "detail_konsultasi" && (
-        <DetailKonsultasi
+        <DetailKonsultasi /* 🚀 SEKARANG SUDAH SAMA DENGAN IMPORT DI ATAS */
           onBack={() => {
             if (user?.role === "admin" || user?.role === "kepala sekolah") {
               setCurrentPage("admin_lihat_konsultasi");
@@ -174,12 +178,10 @@ const App: React.FC = () => {
           onLogout={handleLogout}
           onGoLaporan={() => setCurrentPage("admin_lihat_laporan")}
           onGoKonsultasi={() => setCurrentPage("admin_lihat_konsultasi")}
-          // PERBAIKAN 2: Mengaktifkan fungsi lempar navigasi saat tombol Verifikasi diklik di BerandaAdmin
           onGoVerifikasi={() => setCurrentPage("admin_verifikasi_siswa")}
         />
       )}
 
-      {/* PERBAIKAN 3: Menambahkan blok penayangan halaman Verifikasi Akun Siswa untuk Admin */}
       {currentPage === "admin_verifikasi_siswa" && (
         <AdminVerifikasiSiswa onBack={() => setCurrentPage("admin_beranda")} />
       )}
@@ -198,7 +200,7 @@ const App: React.FC = () => {
         <AdminLihatLaporan
           onBack={() => {
             setCurrentPage(
-              user.role === "admin" ? "admin_beranda" : "kepsek_beranda"
+              user?.role === "admin" ? "admin_beranda" : "kepsek_beranda"
             );
           }}
           onDetail={(item: any) => {
@@ -219,7 +221,7 @@ const App: React.FC = () => {
         <AdminLihatKonsultasi
           onBack={() => {
             setCurrentPage(
-              user.role === "admin" ? "admin_beranda" : "kepsek_beranda"
+              user?.role === "admin" ? "admin_beranda" : "kepsek_beranda"
             );
           }}
           onDetail={(item: any) => {

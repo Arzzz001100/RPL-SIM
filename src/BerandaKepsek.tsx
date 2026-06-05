@@ -36,12 +36,30 @@ const BerandaKepsek: React.FC<Props> = ({
       `http://localhost:8080/api/admin/stats?bulan=${selectedMonth}&tahun=${selectedYear}`,
     )
       .then((res) => res.json())
-      .then((data) => setStats(data))
+      .then((data) => {
+        // Proteksi jika backend mengirimkan data kosong atau tidak berstruktur lengkap
+        if (data) {
+          setStats({
+            totalPengaduan: data.totalPengaduan ?? 0,
+            pengaduanSelesai: data.pengaduanSelesai ?? 0,
+            totalKonsultasi: data.totalKonsultasi ?? 0,
+            konsultasiSelesai: data.konsultasiSelesai ?? 0,
+            kategori: {
+              BULLYING: data.kategori?.BULLYING ?? 0,
+              FASILITAS: data.kategori?.FASILITAS ?? 0,
+              KEKERASAN: data.kategori?.KEKERASAN ?? 0,
+              LAINNYA: data.kategori?.LAINNYA ?? 0,
+            }
+          });
+        }
+      })
       .catch((err) => console.error("Gagal mengambil statistik:", err));
   }, [selectedMonth, selectedYear]);
 
+  // Perbaikan 1: Menghindari distorsi bar jika total pengaduan adalah 0
   const getPercentage = (value: number) => {
-    return stats.totalPengaduan > 0 ? (value / stats.totalPengaduan) * 100 : 0;
+    const total = stats?.totalPengaduan ?? 0;
+    return total > 0 ? (value / total) * 100 : 0;
   };
 
   // --- [ LOGIKA CETAK PDF EKSEKUTIF DENGAN GRAFIK GARIS & ANALISIS TREN ] ---
@@ -76,7 +94,9 @@ const BerandaKepsek: React.FC<Props> = ({
 
       // --- LOGIKA ANALISIS KESIMPULAN TREN PERKEMBANGAN ---
       let kesimpulanTren = "";
-      const selisihKasus = stats.totalPengaduan - statsBulanLalu.totalPengaduan;
+      const totalSkrg = stats?.totalPengaduan ?? 0;
+      const totalLalu = statsBulanLalu?.totalPengaduan ?? 0;
+      const selisihKasus = totalSkrg - totalLalu;
 
       if (selisihKasus > 0) {
         kesimpulanTren = `Meningkat sebanyak ${selisihKasus} kasus dibandingkan dengan bulan ${namaBulan[bulanLalu - 1]}. Hal ini memerlukan perhatian ekstra dan evaluasi berkala terhadap penegakan kedisiplinan siswa.`;
@@ -87,19 +107,24 @@ const BerandaKepsek: React.FC<Props> = ({
       }
 
       // --- LOGIKA PENENTUAN KASUS TERTINGGI & TERENDAH ---
+      const katBullying = stats?.kategori?.BULLYING ?? 0;
+      const katFasilitas = stats?.kategori?.FASILITAS ?? 0;
+      const katKekerasan = stats?.kategori?.KEKERASAN ?? 0;
+      const katLainnya = stats?.kategori?.LAINNYA ?? 0;
+
       const arrayKategori = [
-        { nama: "BULLYING", jumlah: stats.kategori.BULLYING },
-        { nama: "FASILITAS", jumlah: stats.kategori.FASILITAS },
-        { nama: "KEKERASAN", jumlah: stats.kategori.KEKERASAN },
-        { nama: "LAINNYA", jumlah: stats.kategori.LAINNYA },
+        { nama: "BULLYING", jumlah: katBullying },
+        { nama: "FASILITAS", jumlah: katFasilitas },
+        { nama: "KEKERASAN", jumlah: katKekerasan },
+        { nama: "LAINNYA", jumlah: katLainnya },
       ].sort((a, b) => a.jumlah - b.jumlah);
 
-      const kasusPalingSedikit = stats.totalPengaduan > 0 ? `${arrayKategori[0].nama} (${arrayKategori[0].jumlah} Kasus)` : "-";
-      const kasusPalingBanyak = stats.totalPengaduan > 0 ? `${arrayKategori[arrayKategori.length - 1].nama} (${arrayKategori[arrayKategori.length - 1].jumlah} Kasus)` : "-";
+      const kasusPalingSedikit = totalSkrg > 0 ? `${arrayKategori[0].nama} (${arrayKategori[0].jumlah} Kasus)` : "-";
+      const kasusPalingBanyak = totalSkrg > 0 ? `${arrayKategori[arrayKategori.length - 1].nama} (${arrayKategori[arrayKategori.length - 1].jumlah} Kasus)` : "-";
 
       const rangkumanKonsultasiGlobal = [
-        ["TOTAL AGENDA BIMBINGAN", `${stats.totalKonsultasi} Sesi`],
-        ["TOTAL LAYANAN SELESAI (KELAR)", `${stats.konsultasiSelesai} Sesi`]
+        ["TOTAL AGENDA BIMBINGAN", `${stats?.totalKonsultasi ?? 0} Sesi`],
+        ["TOTAL LAYANAN SELESAI (KELAR)", `${stats?.konsultasiSelesai ?? 0} Sesi`]
       ];
 
       // 2. MULAI MEMBUAT STRUKTUR PDF A4
@@ -125,60 +150,59 @@ const BerandaKepsek: React.FC<Props> = ({
       
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`• Total Pengaduan Masuk  : ${stats.totalPengaduan} Kasus (${stats.pengaduanSelesai} Selesai)`, 20, 47);
-      doc.text(`• Total Sesi Bimbingan    : ${stats.totalKonsultasi} Agenda (${stats.konsultasiSelesai} Selesai)`, 20, 53);
+      doc.text(`• Total Pengaduan Masuk  : ${totalSkrg} Kasus (${stats?.pengaduanSelesai ?? 0} Selesai)`, 20, 47);
+      doc.text(`• Total Sesi Bimbingan    : ${stats?.totalKonsultasi ?? 0} Agenda (${stats?.konsultasiSelesai ?? 0} Selesai)`, 20, 53);
       doc.text(`• Tren Pengaduan Bulan Ini: ${kesimpulanTren}`, 20, 59, { maxWidth: 170 });
       doc.text(`• Kasus Dominan Terjadi  : ${kasusPalingBanyak}`, 20, 69);
       doc.text(`• Kasus Terendah Terdata : ${kasusPalingSedikit}`, 20, 75);
       
-      // --- [ DIBUATKAN GRAFIK GARIS (LINE TRADING CHART style) SECARA MANUAL ] ---
+      // SECTION II: GRAFIK TREN KATEGORI MASALAH (LINE CHART)
       doc.setFont("helvetica", "bold");
       doc.text("II. GRAFIK TREN KATEGORI MASALAH (LINE CHART)", 15, 87);
       
       // Menggambar Kotak Batas Chart (Grid Area)
       doc.setLineWidth(0.2);
-      doc.setDrawColor(220, 220, 220); // Warna abu-abu halus
-      doc.rect(25, 93, 160, 40); // (X, Y, Lebar, Tinggi)
+      doc.setDrawColor(220, 220, 220);
+      doc.rect(25, 93, 160, 40);
       
       // Menggambar Garis Bantu Horizontal (Grid Line)
       doc.line(25, 103, 185, 103);
       doc.line(25, 113, 185, 113);
       doc.line(25, 123, 185, 123);
 
-      // Titik Koordinat Koordinat Nilai Kategori (BULLYING, FASILITAS, KEKERASAN, LAINNYA)
-      // Skala Logika: Tinggi kotak 40mm, Batas Maksimum Nilai = 10 Kasus. Jadi 1 Kasus = turun 4mm dari garis atas (Y:93)
+      // Perbaikan 2: Proteksi Math.max dari nilai undefined/null agar tidak menghasilkan NaN
       const hitungYPos = (jumlahKasus: number) => {
-        const maksKasus = Math.max(stats.kategori.BULLYING, stats.kategori.FASILITAS, stats.kategori.KEKERASAN, stats.kategori.LAINNYA, 5);
-        return 133 - (jumlahKasus / maksKasus) * 35; // Skala dinamis biar chart tidak menembus batas kotak
+        const maksKasus = Math.max(katBullying, katFasilitas, katKekerasan, katLainnya, 5);
+        return 133 - (jumlahKasus / maksKasus) * 35;
       };
 
-      const pX = [45, 85, 125, 165]; // Titik X masing-masing 4 kategori
+      const pX = [45, 85, 125, 165];
       const pY = [
-        hitungYPos(stats.kategori.BULLYING),
-        hitungYPos(stats.kategori.FASILITAS),
-        hitungYPos(stats.kategori.KEKERASAN),
-        hitungYPos(stats.kategori.LAINNYA)
+        hitungYPos(katBullying),
+        hitungYPos(katFasilitas),
+        hitungYPos(katKekerasan),
+        hitungYPos(katLainnya)
       ];
 
-      // Menggambar Garis Koneksi Antar Titik (Warna Biru Bold Khas SIBY Group)
+      // Menggambar Garis Koneksi Antar Titik
       doc.setLineWidth(0.8);
-      doc.setDrawColor(30, 58, 138); // Biru Tua
+      doc.setDrawColor(30, 58, 138);
       doc.line(pX[0], pY[0], pX[1], pY[1]);
       doc.line(pX[1], pY[1], pX[2], pY[2]);
       doc.line(pX[2], pY[2], pX[3], pY[3]);
 
-      // Menggambar Titik Bulat (Node Circle) dan Teks Angka di atasnya
+      // Menggambar Titik Bulat (Node Circle) dan Teks Angka
       doc.setFillColor(30, 58, 138);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       
+      const listValues = [katBullying, katFasilitas, katKekerasan, katLainnya];
       for (let i = 0; i < 4; i++) {
-        doc.circle(pX[i], pY[i], 1.2, "F"); // Menggambar titik tebal
-        const nilaiKategori = i === 0 ? stats.kategori.BULLYING : i === 1 ? stats.kategori.FASILITAS : i === 2 ? stats.kategori.KEKERASAN : stats.kategori.LAINNYA;
-        doc.text(`${nilaiKategori}`, pX[i] - 1, pY[i] - 3); // Angka di atas titik
+        doc.circle(pX[i], pY[i], 1.2, "F");
+        doc.text(`${listValues[i]}`, pX[i] - 1, pY[i] - 3);
       }
 
-      // Teks Label Nama Kategori Di Sumbu X Bawah Chart
+      // Teks Label Nama Kategori
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
       doc.text("BULLYING", pX[0], 138, { align: "center" });
@@ -211,7 +235,7 @@ const BerandaKepsek: React.FC<Props> = ({
         head: [["Deskripsi Agenda", "Jumlah Akumulasi"]],
         body: rangkumanKonsultasiGlobal,
         theme: "striped",
-        headStyles: { fillColor: [79, 70, 229] }, // Indigo Color
+        headStyles: { fillColor: [79, 70, 229] },
         styles: { fontSize: 9.5, halign: "center" },
         columnStyles: { 0: { halign: "left" } }
       });
@@ -227,7 +251,6 @@ const BerandaKepsek: React.FC<Props> = ({
       doc.setFont("helvetica", "normal");
       doc.text("NIP. -------------------------", 143, posisiYFinal + 26);
 
-      // Eksekusi download file PDF resmi
       doc.save("laporan pengaduan dan konsultasi SMP Tridharma Manado.pdf");
     } catch (err) {
       console.error(err);
@@ -245,11 +268,7 @@ const BerandaKepsek: React.FC<Props> = ({
       <nav className="flex justify-between items-center px-10 py-6 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center p-2 border border-gray-100">
-            <img
-              src="/logo-sekolah.png"
-              alt="Logo"
-              className="w-full h-full object-contain"
-            />
+            <img src="/logo-sekolah.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-xl font-black italic uppercase tracking-tighter leading-none">
@@ -326,11 +345,11 @@ const BerandaKepsek: React.FC<Props> = ({
               Pengaduan Selesai
             </p>
             <p className="text-7xl font-black text-[#0d9488] tracking-tighter group-hover:scale-110 transition-transform">
-              {stats.pengaduanSelesai}
+              {stats?.pengaduanSelesai ?? 0}
             </p>
             <div className="mt-6 inline-block px-4 py-1 bg-gray-50 rounded-full">
               <p className="text-[10px] text-gray-400 font-bold italic">
-                Dari Total <span className="text-[#1e3a8a]">{stats.totalPengaduan}</span> Masalah Terlapor
+                Dari Total <span className="text-[#1e3a8a]">{stats?.totalPengaduan ?? 0}</span> Masalah Terlapor
               </p>
             </div>
           </div>
@@ -340,11 +359,11 @@ const BerandaKepsek: React.FC<Props> = ({
               Konsultasi Selesai
             </p>
             <p className="text-7xl font-black text-indigo-500 tracking-tighter group-hover:scale-110 transition-transform">
-              {stats.konsultasiSelesai}
+              {stats?.konsultasiSelesai ?? 0}
             </p>
             <div className="mt-6 inline-block px-4 py-1 bg-gray-50 rounded-full">
               <p className="text-[10px] text-gray-400 font-bold italic">
-                Dari Total <span className="text-[#1e3a8a]">{stats.totalKonsultasi}</span> Agenda Bimbingan
+                Dari Total <span className="text-[#1e3a8a]">{stats?.totalKonsultasi ?? 0}</span> Agenda Bimbingan
               </p>
             </div>
           </div>
@@ -359,10 +378,10 @@ const BerandaKepsek: React.FC<Props> = ({
           </div>
           <div className="grid grid-cols-1 gap-10">
             {[
-              { label: "Bullying", value: stats.kategori.BULLYING, color: "bg-red-500" },
-              { label: "Fasilitas", value: stats.kategori.FASILITAS, color: "bg-blue-500" },
-              { label: "Kekerasan", value: stats.kategori.KEKERASAN, color: "bg-orange-500" },
-              { label: "Lainnya", value: stats.kategori.LAINNYA, color: "bg-gray-400" },
+              { label: "Bullying", value: stats?.kategori?.BULLYING ?? 0, color: "bg-red-500" },
+              { label: "Fasilitas", value: stats?.kategori?.FASILITAS ?? 0, color: "bg-blue-500" },
+              { label: "Kekerasan", value: stats?.kategori?.KEKERASAN ?? 0, color: "bg-orange-500" },
+              { label: "Lainnya", value: stats?.kategori?.LAINNYA ?? 0, color: "bg-gray-400" },
             ].map((item, i) => (
               <div key={i} className="group">
                 <div className="flex justify-between items-end mb-3">

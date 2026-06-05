@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import API_BASE from "./api"; // Menggunakan konfigurasi alamat port global 8080
 
 interface Props {
   onBack: () => void;
@@ -66,8 +67,9 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
 
     setLoading(true);
     try {
+      // Mengganti hardcoded url menjadi endpoint dinamis dari API_BASE
       const res = await fetch(
-        `http://localhost:8080/api/admin/update-konsultasi/${selectedData.id}`,
+        `${API_BASE}/api/admin/update-konsultasi/${selectedData.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -97,7 +99,7 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
       <div className="max-w-md w-full bg-white rounded-[40px] shadow-2xl p-10 border border-blue-50">
         <div className="flex items-center gap-4 mb-8 text-left">
           <button onClick={onBack} className="text-4xl text-blue-900">
-            ↩
+            &larr;
           </button>
           <h1 className="text-xl font-black text-blue-900 uppercase">
             Detail Konsultasi
@@ -167,7 +169,6 @@ const AdminDetailKonsultasi: React.FC<Props> = ({ onBack, selectedData }) => {
             className="w-full px-5 py-3 rounded-2xl bg-gray-50 border border-gray-200 font-medium text-gray-600 h-24 outline-none disabled:opacity-50 resize-none"
           ></textarea>
 
-          {/* Dinamisasi Tombol: Mengunci klik & mengubah style warna jika data sudah berstatus SELESAI/DITOLAK atau user adalah KEPSEK */}
           <button
             onClick={handleUpdate}
             disabled={loading || isDisabled}

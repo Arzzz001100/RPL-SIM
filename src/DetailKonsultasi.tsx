@@ -8,17 +8,30 @@ interface DetailProps {
 const DetailKonsultasi: React.FC<DetailProps> = ({ onBack, selectedData }) => {
   if (!selectedData) return null;
 
+  // Perbaikan 1: Validasi string tanggal agar terhindar dari tulisan "Invalid Date"
   const formatTanggal = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
-    } catch (e) {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    
+    // Memeriksa apakah tanggal valid secara komputasi internal JavaScript
+    if (isNaN(date.getTime())) {
       return dateString;
     }
+
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
+  // Perbaikan 2: Memastikan URL selalu memiliki awalan https:// agar tidak merusak navigasi browser
+  const formatSesiUrl = (url: string) => {
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+    return `https://${url}`;
   };
 
   return (
@@ -36,7 +49,7 @@ const DetailKonsultasi: React.FC<DetailProps> = ({ onBack, selectedData }) => {
               Detail Konsultasi
             </h2>
             <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em]">
-              Status: {selectedData.status}
+              Status: {selectedData.status || "PENDING"}
             </p>
           </div>
         </div>
@@ -51,7 +64,7 @@ const DetailKonsultasi: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     Guru Pembimbing
                   </label>
                   <p className="text-2xl font-black uppercase text-orange-400">
-                    {selectedData.nama_guru}
+                    {selectedData.nama_guru || "Belum Ditentukan"}
                   </p>
                 </div>
                 <div>
@@ -62,14 +75,14 @@ const DetailKonsultasi: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                     {formatTanggal(selectedData.tanggal)}
                   </p>
                   <p className="text-sm font-medium text-blue-200">
-                    {selectedData.jam} WITA
+                    {selectedData.jam ? `${selectedData.jam} WITA` : "Waktu Belum Diatur"}
                   </p>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-blue-300 uppercase tracking-widest block mb-1">
                     Topik Pembahasan
                   </label>
-                  <p className="italic text-blue-100">"{selectedData.topik}"</p>
+                  <p className="italic text-blue-100">"{selectedData.topik || "Konsultasi Umum"}"</p>
                 </div>
               </div>
             </div>
@@ -82,7 +95,7 @@ const DetailKonsultasi: React.FC<DetailProps> = ({ onBack, selectedData }) => {
                 </label>
                 {selectedData.link_zoom ? (
                   <a
-                    href={selectedData.link_zoom}
+                    href={formatSesiUrl(selectedData.link_zoom)}
                     target="_blank"
                     rel="noreferrer"
                     className="block w-full p-4 bg-orange-500 text-white text-center rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-orange-600 transition-all active:scale-95"

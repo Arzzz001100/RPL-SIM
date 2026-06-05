@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import API_BASE from "./api"; // Hubungkan ke file konfigurasi port pusat Anda
 
 interface AdminDetailProps {
   onBack: () => void;
@@ -34,8 +35,9 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
 
     setLoading(true);
     try {
+      // Menggunakan variabel dinamis API_BASE
       const res = await fetch(
-        `http://localhost:8080/api/admin/update-laporan/${selectedData.id}`,
+        `${API_BASE}/api/admin/update-laporan/${selectedData.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -56,8 +58,9 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
     }
   };
 
+  // Sinkronisasi jalur folder aset upload backend lewat API_BASE
   const getImageUrl = (filename: string) => {
-    return encodeURI(`http://localhost:8080/uploads/${filename}`);
+    return encodeURI(`${API_BASE}/uploads/${filename}`);
   };
 
   const listFoto = selectedData?.foto
@@ -102,7 +105,7 @@ const AdminDetailLaporan: React.FC<AdminDetailProps> = ({
           onClick={onBack}
           className="text-4xl mb-6 text-blue-900 hover:scale-110 transition-transform active:scale-90 outline-none"
         >
-          ↩
+          &larr;
         </button>
 
         <div className="bg-white rounded-[40px] shadow-2xl p-10 border border-gray-100">

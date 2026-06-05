@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import API_BASE from "./api"; // Hubungkan ke file konfigurasi port pusat Anda
 
 interface Props {
   onBack: () => void;
@@ -13,7 +14,8 @@ const AdminLihatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
   const isKepsek = user.role === "kepala sekolah";
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/admin/konsultasi")
+    // Menggunakan variabel global API_BASE
+    fetch(`${API_BASE}/api/admin/konsultasi`)
       .then((res) => res.json())
       .then((data) => setDaftarKonsultasi(Array.isArray(data) ? data : []))
       .catch(() => setDaftarKonsultasi([]));
@@ -60,10 +62,11 @@ const AdminLihatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {daftarKonsultasi.length > 0 ? (
-              daftarKonsultasi.map(
-                (
-                  item, // SUDAH DIPERBAIKI: daftarKonsultasi
-                ) => (
+              daftarKonsultasi.map((item) => {
+                // Standarisasi string status ke huruf kapital untuk menghindari masalah case-sensitivity
+                const statusLaporan = item.status?.toUpperCase() || "MENUNGGU";
+
+                return (
                   <tr
                     key={item.id}
                     className="hover:bg-blue-50/50 transition-all cursor-default"
@@ -97,28 +100,34 @@ const AdminLihatKonsultasi: React.FC<Props> = ({ onBack, onDetail }) => {
                         >
                           Lihat
                         </button>
-                      ) : item.status === "Selesai" ? (
+                      ) : statusLaporan === "SELESAI" ? (
                         <div className="flex items-center justify-center">
                           <span className="bg-[#1e3a8a] text-white px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-md">
-                            ✓ Selesai
+                            &bull; Selesai
+                          </span>
+                        </div>
+                      ) : statusLaporan === "DITOLAK" ? (
+                        <div className="flex items-center justify-center">
+                          <span className="bg-red-600 text-white px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-md">
+                            &bull; Ditolak
                           </span>
                         </div>
                       ) : (
                         <button
                           onClick={() => onDetail(item)}
                           className={`px-6 py-2 rounded-xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-all text-white ${
-                            item.status === "Diterima"
+                            statusLaporan === "DITERIMA"
                               ? "bg-blue-500 hover:bg-blue-600"
                               : "bg-orange-500 hover:bg-orange-600"
                           }`}
                         >
-                          {item.status || "Menunggu"}
+                          {statusLaporan}
                         </button>
                       )}
                     </td>
                   </tr>
-                ),
-              )
+                );
+              })
             ) : (
               <tr>
                 <td

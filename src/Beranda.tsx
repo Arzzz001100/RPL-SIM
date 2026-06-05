@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import API_BASE from "./api"; // Menggunakan konfigurasi alamat port global pusat
 
 interface Props {
   onLogout: () => void;
@@ -27,22 +28,25 @@ const Beranda: React.FC<Props> = ({
     const fetchData = async () => {
       if (!user.id) return;
       try {
+        // 1. Sinkronisasi URL Pengaduan menggunakan API_BASE
         const resLapor = await fetch(
-          `http://localhost:8080/api/laporan/user/${user.id}`,
+          `${API_BASE}/api/laporan/user/${user.id}`,
         );
         if (resLapor.ok) {
           const dataLapor = await resLapor.json();
           setRiwayatLaporan(Array.isArray(dataLapor) ? dataLapor : []);
         }
+        
+        // 2. Sinkronisasi URL Riwayat Konsultasi menggunakan API_BASE
         const resKonsul = await fetch(
-          `http://localhost:8080/api/riwayat/${user.id}`,
+          `${API_BASE}/api/riwayat/${user.id}`,
         );
         if (resKonsul.ok) {
           const dataKonsul = await resKonsul.json();
           setRiwayatKonsultasi(Array.isArray(dataKonsul) ? dataKonsul : []);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Gagal memuat data riwayat beranda:", err);
       }
     };
     fetchData();
@@ -98,7 +102,7 @@ const Beranda: React.FC<Props> = ({
           SMP TRIDHARMA MANADO
         </p>
 
-        {/* LOGO SEKOLAH - Dibuat Mencolok dengan Kontainer Putih Solid */}
+        {/* LOGO SEKOLAH */}
         <div className="mb-10 relative z-10 group">
           <div className="bg-white p-5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-4 border-white/20 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_30px_60px_rgba(0,0,0,0.5)] cursor-pointer">
             <img
@@ -121,6 +125,7 @@ const Beranda: React.FC<Props> = ({
       </div>
 
       <div className="mx-10 mt-12 mb-20 grid grid-cols-1 md:grid-cols-2 gap-10">
+        {/* SECTION: RIWAYAT PENGADUAN */}
         <section>
           <div className="flex justify-between items-center mb-6 border-l-4 border-blue-500 pl-4">
             <h3 className="text-xl font-black text-[#1e3a8a] uppercase italic">
@@ -162,6 +167,7 @@ const Beranda: React.FC<Props> = ({
           </div>
         </section>
 
+        {/* SECTION: RIWAYAT KONSULTASI */}
         <section>
           <div className="flex justify-between items-center mb-6 border-l-4 border-orange-500 pl-4">
             <h3 className="text-xl font-black text-[#1e3a8a] uppercase italic">
@@ -191,7 +197,11 @@ const Beranda: React.FC<Props> = ({
                     </p>
                   </div>
                   <span
-                    className={`text-white px-4 py-1 rounded-full text-[9px] font-black uppercase ${item.status === "Selesai" || item.status === "DIPROSES" ? "bg-[#1e3a8a]" : "bg-orange-500"}`}
+                    className={`text-white px-4 py-1 rounded-full text-[9px] font-black uppercase ${
+                      item.status === "Selesai" || item.status === "DIPROSES"
+                        ? "bg-[#1e3a8a]"
+                        : "bg-orange-500"
+                    }`}
                   >
                     {item.status}
                   </span>

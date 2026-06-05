@@ -10,6 +10,8 @@ interface FormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  securityQuestion?: string; // TAMBAHAN
+  securityAnswer?: string;   // TAMBAHAN
 }
 
 // Pilihan pertanyaan keamanan
@@ -34,11 +36,11 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // State security question (TAMBAHAN)
+  // State security question
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
 
-  // ─── Validasi ───────────────────────────────────────────────────────────────
+  // ─── Validasi Fungsi ─────────────────────────────────────────────────────────
 
   const validateNama = (value: string): string | undefined => {
     const trimmed = value.trim();
@@ -84,13 +86,25 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
 
   const validateConfirmPassword = (
     value: string,
-    passValue: string,
+    passValue: string
   ): string | undefined => {
     if (!value) return "Konfirmasi password wajib diisi.";
     if (value !== passValue) return "Konfirmasi password tidak cocok.";
     return undefined;
   };
 
+  const validateSecurityQuestion = (value: string): string | undefined => {
+    if (!value) return "Pertanyaan keamanan wajib dipilih.";
+    return undefined;
+  };
+
+  const validateSecurityAnswer = (value: string): string | undefined => {
+    if (!value.trim()) return "Jawaban keamanan wajib diisi.";
+    if (value.trim().length < 2) return "Jawaban terlalu pendek.";
+    return undefined;
+  };
+
+  // Evaluasi validasi menyeluruh sebelum submit
   const validate = (): boolean => {
     const newErrors: FormErrors = {
       nama: validateNama(nama),
@@ -98,28 +112,24 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
       email: validateEmail(email),
       password: validatePassword(password),
       confirmPassword: validateConfirmPassword(confirmPassword, password),
+      securityQuestion: validateSecurityQuestion(securityQuestion),
+      securityAnswer: validateSecurityAnswer(securityAnswer),
     };
+
     setErrors(newErrors);
-
-    // Cek juga security question (TAMBAHAN)
-    if (!securityQuestion) {
-      alert("Pilih pertanyaan keamanan terlebih dahulu!");
-      return false;
-    }
-    if (!securityAnswer.trim()) {
-      alert("Jawaban keamanan wajib diisi!");
-      return false;
-    }
-
+    
+    // Form valid jika tidak ada satupun properti di newErrors yang bernilai string (error message)
     return !Object.values(newErrors).some(Boolean);
   };
 
-  // ─── Handler per field (validasi real-time saat blur) ────────────────────────
+  // ─── Handler Per Field (Validasi saat Blur / Change) ────────────────────────
 
   const handleBlurNama = () =>
     setErrors((e) => ({ ...e, nama: validateNama(nama) }));
+  
   const handleBlurEmail = () =>
     setErrors((e) => ({ ...e, email: validateEmail(email) }));
+  
   const handleBlurPassword = () => {
     setErrors((e) => ({
       ...e,
@@ -129,13 +139,17 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
         : e.confirmPassword,
     }));
   };
+
   const handleBlurConfirmPassword = () =>
     setErrors((e) => ({
       ...e,
       confirmPassword: validateConfirmPassword(confirmPassword, password),
     }));
 
-  // ─── Submit ──────────────────────────────────────────────────────────────────
+  const handleBlurSecurityAnswer = () => 
+    setErrors((e) => ({ ...e, securityAnswer: validateSecurityAnswer(securityAnswer) }));
+
+  // ─── Submit Handler ──────────────────────────────────────────────────────────
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,43 +165,40 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
           email: email.trim().toLowerCase(),
           password,
           kelas,
-          security_question: securityQuestion,   // TAMBAHAN
-          security_answer: securityAnswer.trim(), // TAMBAHAN
+          security_question: securityQuestion,
+          // Mengubah jawaban menjadi huruf kecil agar pencocokan saat lupa password lebih fleksibel
+          security_answer: securityAnswer.trim().toLowerCase(), 
         }),
       });
       const data = await response.json();
       if (data.success) {
         alert(
-          "Akun berhasil didaftarkan! Silakan hubungi Admin / Guru BK di sekolah untuk proses aktivasi akun Anda.",
+          "Akun berhasil didaftarkan! Silakan hubungi Admin / Guru BK di sekolah untuk proses aktivasi akun Anda."
         );
         onSwitch();
       } else {
         alert(
-          data.message ||
-            "Pendaftaran gagal. Pastikan database db_sim sudah siap.",
+          data.message || "Pendaftaran gagal. Pastikan database db_sim sudah siap."
         );
       }
     } catch {
-      alert("Server tidak merespon di port 8080.");
+      alert("Server tidak merespon di port 8080. Pastikan backend Anda aktif.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── Helper class ─────────────────────────────────────────────────────────────
+  // ─── Helper Tailwind Class ─────────────────────────────────────────────────────
 
   const inputClass = (field: keyof FormErrors) =>
     `w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border transition-all ${
       errors[field]
-        ? "border-red-400 bg-red-500/10"
+        ? "border-red-400 bg-red-500/10 focus:border-red-400 focus:bg-red-500/10"
         : "border-white/10 focus:border-white/40 focus:bg-white/20"
     }`;
 
-  // ─── Render ───────────────────────────────────────────────────────────────────
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-[#1e3a8a]">
-      {/* Tag style untuk menyembunyikan scrollbar tanpa merusak layout */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -222,6 +233,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
               className={inputClass("nama")}
               maxLength={60}
               autoComplete="name"
+              disabled={loading}
             />
             {errors.nama && (
               <p className="text-red-300 text-[10px] font-semibold ml-4 mt-1">
@@ -240,25 +252,17 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
                 value={kelas}
                 onChange={(e) => {
                   setKelas(e.target.value);
-                  setErrors((err) => ({
-                    ...err,
-                    kelas: validateKelas(e.target.value),
-                  }));
+                  setErrors((err) => ({ ...err, kelas: undefined }));
                 }}
-                className={`${inputClass("kelas")} appearance-none cursor-pointer`}
+                className={`${inputClass("kelas")} appearance-none cursor-pointer text-sm`}
+                disabled={loading}
               >
                 <option value="" disabled className="bg-[#1e3a8a]">
                   Pilih Kelas
                 </option>
-                <option value="7" className="bg-[#1e3a8a]">
-                  Kelas 7
-                </option>
-                <option value="8" className="bg-[#1e3a8a]">
-                  Kelas 8
-                </option>
-                <option value="9" className="bg-[#1e3a8a]">
-                  Kelas 9
-                </option>
+                <option value="7" className="bg-[#1e3a8a]">Kelas 7</option>
+                <option value="8" className="bg-[#1e3a8a]">Kelas 8</option>
+                <option value="9" className="bg-[#1e3a8a]">Kelas 9</option>
               </select>
               <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
                 ▼
@@ -285,6 +289,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
               className={inputClass("email")}
               maxLength={100}
               autoComplete="email"
+              disabled={loading}
             />
             {errors.email && (
               <p className="text-red-300 text-[10px] font-semibold ml-4 mt-1">
@@ -308,6 +313,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
                 className={`${inputClass("password")} pr-14`}
                 maxLength={64}
                 autoComplete="new-password"
+                disabled={loading}
               />
               <button
                 type="button"
@@ -322,40 +328,17 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
             {password.length > 0 && (
               <div className="mt-2 ml-1 space-y-1">
                 {[
-                  {
-                    ok: password.length >= 8 && password.length <= 64,
-                    label: "8–64 karakter",
-                  },
-                  {
-                    ok: /[A-Z]/.test(password),
-                    label: "Minimal 1 huruf besar (A-Z)",
-                  },
-                  {
-                    ok: /[a-z]/.test(password),
-                    label: "Minimal 1 huruf kecil (a-z)",
-                  },
-                  {
-                    ok: /[0-9]/.test(password),
-                    label: "Minimal 1 angka (0-9)",
-                  },
-                  {
-                    ok: !/^(.)\1+$/.test(password),
-                    label: "Tidak boleh karakter yang sama semua",
-                  },
+                  { ok: password.length >= 8 && password.length <= 64, label: "8–64 karakter" },
+                  { ok: /[A-Z]/.test(password), label: "Minimal 1 huruf besar (A-Z)" },
+                  { ok: /[a-z]/.test(password), label: "Minimal 1 huruf kecil (a-z)" },
+                  { ok: /[0-9]/.test(password), label: "Minimal 1 angka (0-9)" },
+                  { ok: !/^(.)\1+$/.test(password), label: "Tidak boleh karakter sama semua" },
                 ].map(({ ok, label }) => (
                   <div key={label} className="flex items-center gap-2">
-                    <span
-                      className={`text-[11px] font-black transition-colors ${
-                        ok ? "text-green-300" : "text-red-400"
-                      }`}
-                    >
+                    <span className={`text-[11px] font-black ${ok ? "text-green-300" : "text-red-400"}`}>
                       {ok ? "✓" : "✗"}
                     </span>
-                    <span
-                      className={`text-[10px] font-semibold transition-colors ${
-                        ok ? "text-green-300" : "text-red-300/80"
-                      }`}
-                    >
+                    <span className={`text-[10px] font-semibold ${ok ? "text-green-300" : "text-red-300/80"}`}>
                       {label}
                     </span>
                   </div>
@@ -387,6 +370,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
                 className={`${inputClass("confirmPassword")} pr-14`}
                 maxLength={64}
                 autoComplete="new-password"
+                disabled={loading}
               />
               <button
                 type="button"
@@ -403,7 +387,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
             )}
           </div>
 
-          {/* ── TAMBAHAN: Divider + Security Question ── */}
+          {/* Divider */}
           <div className="flex items-center gap-3 py-1">
             <div className="flex-1 h-px bg-white/10"></div>
             <span className="text-white/30 text-[9px] font-black uppercase tracking-widest">
@@ -412,7 +396,7 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
             <div className="flex-1 h-px bg-white/10"></div>
           </div>
 
-          {/* Pertanyaan Keamanan */}
+          {/* Pilihan Pertanyaan Keamanan */}
           <div className="space-y-1">
             <label className="text-white/70 text-[10px] font-black uppercase tracking-widest ml-4">
               Pertanyaan Keamanan
@@ -420,8 +404,12 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
             <div className="relative">
               <select
                 value={securityQuestion}
-                onChange={(e) => setSecurityQuestion(e.target.value)}
-                className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all appearance-none cursor-pointer text-sm"
+                onChange={(e) => {
+                  setSecurityQuestion(e.target.value);
+                  setErrors((err) => ({ ...err, securityQuestion: undefined }));
+                }}
+                className={`${inputClass("securityQuestion")} appearance-none cursor-pointer text-sm`}
+                disabled={loading}
               >
                 <option value="" disabled className="bg-[#1e3a8a]">
                   Pilih pertanyaan keamanan
@@ -436,9 +424,14 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
                 ▼
               </div>
             </div>
+            {errors.securityQuestion && (
+              <p className="text-red-300 text-[10px] font-semibold ml-4 mt-1">
+                {errors.securityQuestion}
+              </p>
+            )}
           </div>
 
-          {/* Jawaban Keamanan */}
+          {/* Input Jawaban Keamanan */}
           <div className="space-y-1">
             <label className="text-white/70 text-[10px] font-black uppercase tracking-widest ml-4">
               Jawaban Keamanan
@@ -448,14 +441,21 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
               placeholder="Jawaban yang mudah kamu ingat"
               value={securityAnswer}
               onChange={(e) => setSecurityAnswer(e.target.value)}
-              className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
+              onBlur={handleBlurSecurityAnswer}
+              className={inputClass("securityAnswer")}
               maxLength={100}
+              disabled={loading}
             />
-            <p className="text-white/30 text-[9px] ml-4 mt-1">
-              Digunakan jika kamu lupa password. Ingat jawabanmu baik-baik!
-            </p>
+            {errors.securityAnswer ? (
+              <p className="text-red-300 text-[10px] font-semibold ml-4 mt-1">
+                {errors.securityAnswer}
+              </p>
+            ) : (
+              <p className="text-white/30 text-[9px] ml-4 mt-1">
+                Digunakan jika kamu lupa password. Ingat jawabanmu baik-baik!
+              </p>
+            )}
           </div>
-          {/* ── AKHIR TAMBAHAN ── */}
 
           <button
             type="submit"
@@ -470,7 +470,8 @@ const Register: React.FC<Props> = ({ onSwitch }) => {
           Sudah memiliki akun?{" "}
           <button
             onClick={onSwitch}
-            className="text-white border-b border-white hover:text-blue-200 hover:border-blue-200 transition-all ml-1 font-black"
+            disabled={loading}
+            className="text-white border-b border-white hover:text-blue-200 hover:border-blue-200 transition-all ml-1 font-black disabled:opacity-30"
           >
             Masuk
           </button>

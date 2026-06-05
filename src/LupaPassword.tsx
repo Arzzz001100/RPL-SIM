@@ -14,44 +14,60 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Step 1 — cari akun berdasarkan email
+  // Step 1 — Cari akun berdasarkan email
   const handleCariAkun = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) return alert("Silakan masukkan email Anda!");
+
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8080/api/forgot-password/question?email=${encodeURIComponent(email)}`
+        `http://localhost:8080/api/forgot-password/question?email=${encodeURIComponent(trimmedEmail)}`
       );
       const data = await res.json();
+      
       if (data.success) {
         setSecurityQuestion(data.security_question);
         setStep(2);
       } else {
-        alert(data.message || "Email tidak ditemukan.");
+        // Amankan pesan error agar tidak membocorkan database secara eksplisit
+        alert("Permintaan tidak dapat diproses. Silakan periksa kembali email Anda.");
       }
     } catch {
-      alert("Gagal terhubung ke server.");
+      alert("Gagal terhubung ke server. Periksa koneksi Anda.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 2 — verifikasi jawaban keamanan
+  // Step 2 — Verifikasi jawaban keamanan
   const handleVerifikasiJawaban = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
+    const trimmedAnswer = securityAnswer.trim();
+    if (!trimmedAnswer) return alert("Jawaban keamanan tidak boleh kosong!");
+
     setLoading(true);
     try {
       const res = await fetch("http://localhost:8080/api/forgot-password/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, security_answer: securityAnswer }),
+        body: JSON.stringify({ 
+          email: email.trim().toLowerCase(), 
+          security_answer: trimmedAnswer 
+        }),
       });
       const data = await res.json();
+      
       if (data.success) {
         setUserId(data.id);
         setStep(3);
       } else {
-        alert(data.message || "Jawaban keamanan salah.");
+        alert(data.message || "Jawaban keamanan yang Anda masukkan salah.");
       }
     } catch {
       alert("Gagal terhubung ke server.");
@@ -60,36 +76,58 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
     }
   };
 
-  // Step 3 — reset password baru
+  // Step 3 — Reset password baru
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
+    // Validasi Sisi Klien (Client-side validation)
+    if (!userId) {
+      alert("Sesi verifikasi tidak valid. Silakan ulangi langkah awal.");
+      setStep(1);
+      return;
+    }
     if (newPassword !== confirmPassword) {
       alert("Konfirmasi password tidak cocok!");
       return;
     }
     if (newPassword.length < 8) {
-      alert("Password minimal 8 karakter!");
+      alert("Password minimal harus berukuran 8 karakter!");
       return;
     }
+
     setLoading(true);
     try {
       const res = await fetch("http://localhost:8080/api/forgot-password/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId, new_password: newPassword }),
+        // Menyertakan email dan ID untuk verifikasi berlapis di sisi backend
+        body: JSON.stringify({ 
+          id: userId, 
+          email: email.trim().toLowerCase(),
+          new_password: newPassword 
+        }),
       });
       const data = await res.json();
+      
       if (data.success) {
-        alert("Password berhasil diubah! Silakan login dengan password baru.");
+        alert("Password berhasil diubah! Silakan login menggunakan password baru Anda.");
         onBack();
       } else {
-        alert("Gagal mengubah password. Coba lagi.");
+        alert(data.message || "Gagal mengubah password. Silakan coba kembali.");
       }
     } catch {
-      alert("Gagal terhubung ke server.");
+      alert("Gagal memperbarui password ke server.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBackToStepOne = () => {
+    setSecurityQuestion("");
+    setSecurityAnswer("");
+    setUserId(null);
+    setStep(1);
   };
 
   return (
@@ -99,7 +137,7 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
       <div className="absolute bottom-0 right-0 w-80 h-80 bg-black/20 rounded-full -mr-20 -mb-20 blur-3xl"></div>
 
       <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[50px] shadow-2xl w-[90%] max-w-[450px] border border-white/20 flex flex-col items-center relative z-10">
-
+        
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-white font-black text-3xl tracking-tighter italic uppercase">
@@ -150,6 +188,7 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
                 required
+                disabled={loading}
               />
             </div>
             <p className="text-white/40 text-[10px] text-center px-4">
@@ -173,7 +212,7 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
                 Pertanyaan Keamanan
               </p>
               <p className="text-white font-semibold text-sm leading-snug">
-                {securityQuestion}
+                {securityQuestion || "Memuat pertanyaan..."}
               </p>
             </div>
             <div className="space-y-1">
@@ -187,6 +226,8 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
                 onChange={(e) => setSecurityAnswer(e.target.value)}
                 className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
                 required
+                disabled={loading}
+                autoFocus
               />
             </div>
             <p className="text-white/40 text-[10px] text-center px-4">
@@ -201,8 +242,9 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
             </button>
             <button
               type="button"
-              onClick={() => setStep(1)}
-              className="w-full py-3 text-white/50 font-bold text-xs uppercase tracking-widest hover:text-white transition-all"
+              onClick={handleBackToStepOne}
+              disabled={loading}
+              className="w-full py-3 text-white/50 font-bold text-xs uppercase tracking-widest hover:text-white transition-all disabled:opacity-30"
             >
               ← Kembali
             </button>
@@ -229,6 +271,7 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
                 className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
                 required
                 minLength={8}
+                disabled={loading}
               />
             </div>
             <div className="space-y-1">
@@ -243,6 +286,7 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
                 className="w-full px-6 py-3.5 rounded-2xl bg-white/10 text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/40 focus:bg-white/20 transition-all"
                 required
                 minLength={8}
+                disabled={loading}
               />
             </div>
             <button
@@ -260,7 +304,8 @@ const LupaPassword: React.FC<Props> = ({ onBack }) => {
           Ingat passwordmu?{" "}
           <button
             onClick={onBack}
-            className="text-white border-b border-white hover:text-blue-200 hover:border-blue-200 transition-all ml-1 font-black"
+            disabled={loading}
+            className="text-white border-b border-white hover:text-blue-200 hover:border-blue-200 transition-all ml-1 font-black disabled:opacity-30"
           >
             Masuk
           </button>

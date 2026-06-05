@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import API_BASE from "./api"; // Menggunakan konfigurasi alamat port global pusat
 
 interface SiswaPending {
   id: number;
@@ -17,14 +18,13 @@ const AdminVerifikasiSiswa: React.FC<Props> = ({ onBack }) => {
   const [loadingFetch, setLoadingFetch] = useState(true);
   const [actionId, setActionId] = useState<number | null>(null);
 
-  // Ambil data siswa yang berstatus PENDING dari backend saat komponen dimuat
+  // Ambil data siswa yang berstatus PENDING menggunakan API_BASE global
   const fetchSiswaPending = () => {
     setLoadingFetch(true);
-    fetch("http://localhost:8080/api/admin/siswa-pending")
+    fetch(`${API_BASE}/api/admin/siswa-pending`)
       .then((res) => res.json())
       .then((data) => setListSiswa(Array.isArray(data) ? data : []))
       .catch((err) => console.error("Gagal mengambil data siswa pending:", err))
-      // PERBAIKAN DI SINI: Mengubah .define menjadi .finally agar sesuai standar Promise TypeScript
       .finally(() => setLoadingFetch(false));
   };
 
@@ -38,7 +38,7 @@ const AdminVerifikasiSiswa: React.FC<Props> = ({ onBack }) => {
     
     setActionId(id);
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/verifikasi-siswa/${id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/verifikasi-siswa/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" }
       });
@@ -56,13 +56,13 @@ const AdminVerifikasiSiswa: React.FC<Props> = ({ onBack }) => {
     }
   };
 
-  // Fungsi untuk Menolak / Menghapus Akun Palsu
+  // Fungsi untuk Menolak / Menghapus Akun Palsu secara Permanen
   const handleTolak = async (id: number, nama: string) => {
     if (!window.confirm(`PERINGATAN!\nApakah Anda yakin ingin menolak dan menghapus pendaftaran akun atas nama "${nama}"? Data akan dihapus permanen.`)) return;
     
     setActionId(id);
     try {
-      const res = await fetch(`http://localhost:8080/api/admin/tolak-siswa/${id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/tolak-siswa/${id}`, {
         method: "DELETE"
       });
       
