@@ -1,2 +1,2 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE = "https://rpl-sim-qoq1.vercel.app";
 export default API_BASE;
