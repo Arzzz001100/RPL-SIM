@@ -21,11 +21,11 @@ const transporter = nodemailer.createTransport({
 });
 
 // 1. Konfigurasi Folder Uploads
-const uploadDir = "./uploads";
+const uploadDir = "/tmp/uploads";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("/tmp/uploads"));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
