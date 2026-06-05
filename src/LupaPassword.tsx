@@ -4,14 +4,6 @@ interface Props {
   onBack: () => void;
 }
 
-const SECURITY_QUESTIONS = [
-  "Siapa nama lengkap ibu kandungmu?",
-  "Di SD mana kamu bersekolah dulu?",
-  "Apa nama hewan peliharaan pertamamu?",
-  "Apa nama kota kelahiranmu?",
-  "Siapa nama guru SD favoritmu?",
-];
-
 const LupaPassword: React.FC<Props> = ({ onBack }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState("");
