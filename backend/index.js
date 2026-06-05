@@ -10,6 +10,10 @@ import nodemailer from "nodemailer";
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path}`);
+  next();
+});
 
 // --- [ CONFIG NODEMAILER ] ---
 const transporter = nodemailer.createTransport({
@@ -29,7 +33,7 @@ app.use("/uploads", express.static("/tmp/uploads"));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    cb(null, "/tmp/uploads/");
   },
   filename: (req, file, cb) => {
     cb(
