@@ -61,7 +61,7 @@ db.connect((err) => {
 });
 
 // --- [ AUTH - PERBAIKAN PROTEKSI VERIFIKASI AKUN ADMIN BK ] ---
-app.post("/login", (req, res) => {
+app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   db.query(
     "SELECT * FROM users WHERE email = ? AND password = ?",
@@ -87,7 +87,7 @@ app.post("/login", (req, res) => {
   );
 });
 
-app.post("/register", (req, res) => {
+app.post("/api/register", (req, res) => {
   const { nama, email, password, kelas, security_question, security_answer } =
     req.body;
   db.query(
@@ -109,7 +109,7 @@ app.post("/register", (req, res) => {
 // --- [ LUPA PASSWORD ] ---
 
 // Step 1: Ambil pertanyaan keamanan berdasarkan email
-app.get("/forgot-password/question", (req, res) => {
+app.get("/api/forgot-password/question", (req, res) => {
   const { email } = req.query;
   db.query(
     "SELECT security_question FROM users WHERE email = ?",
@@ -133,7 +133,7 @@ app.get("/forgot-password/question", (req, res) => {
 });
 
 // Step 2: Verifikasi jawaban keamanan
-app.post("/forgot-password/verify", (req, res) => {
+app.post("/api/forgot-password/verify", (req, res) => {
   const { email, security_answer } = req.body;
   db.query(
     "SELECT id FROM users WHERE email = ? AND LOWER(security_answer) = LOWER(?)",
@@ -153,7 +153,7 @@ app.post("/forgot-password/verify", (req, res) => {
 });
 
 // Step 3: Reset password
-app.post("/forgot-password/reset", (req, res) => {
+app.post("/api/forgot-password/reset", (req, res) => {
   const { id, new_password } = req.body;
   db.query(
     "UPDATE users SET password = ? WHERE id = ?",
@@ -166,7 +166,7 @@ app.post("/forgot-password/reset", (req, res) => {
 });
 
 // --- [ PENGADUAN ] ---
-app.post("/laporan", upload.array("foto", 4), (req, res) => {
+app.post("/api/laporan", upload.array("foto", 4), (req, res) => {
   const { id_siswa, kategori, isi_laporan } = req.body;
 
   let fotoString = null;
@@ -186,7 +186,7 @@ app.post("/laporan", upload.array("foto", 4), (req, res) => {
   );
 });
 
-app.get("/laporan/user/:id_siswa", (req, res) => {
+app.get("/api/laporan/user/:id_siswa", (req, res) => {
   db.query(
     "SELECT * FROM laporan WHERE id_siswa = ? ORDER BY id DESC",
     [req.params.id_siswa],
@@ -198,14 +198,14 @@ app.get("/laporan/user/:id_siswa", (req, res) => {
 });
 
 // --- [ KONSULTASI ] ---
-app.get("/guru", (req, res) => {
+app.get("/api/guru", (req, res) => {
   db.query("SELECT * FROM guru", (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(result);
   });
 });
 
-app.post("/konsultasi", (req, res) => {
+app.post("/api/konsultasi", (req, res) => {
   const { id_siswa, id_guru, tanggal, jam, topik } = req.body;
   db.query(
     "INSERT INTO konsultasi (id_siswa, id_guru, tanggal, jam, topik, status) VALUES (?, ?, ?, ?, ?, 'MENUNGGU')",
@@ -217,7 +217,7 @@ app.post("/konsultasi", (req, res) => {
   );
 });
 
-app.get("/riwayat/:id_siswa", (req, res) => {
+app.get("/api/riwayat/:id_siswa", (req, res) => {
   const sql =
     "SELECT k.*, g.nama_guru FROM konsultasi k JOIN guru g ON k.id_guru = g.id_guru WHERE k.id_siswa = ? ORDER BY k.id DESC";
   db.query(sql, [req.params.id_siswa], (err, result) => {
@@ -228,7 +228,7 @@ app.get("/riwayat/:id_siswa", (req, res) => {
 
 // --- [ ADMIN & KEPSEK SECTION ] ---
 
-app.get("/admin/stats", (req, res) => {
+app.get("/api/admin/stats", (req, res) => {
   const { bulan, tahun } = req.query;
 
   const qL =
@@ -276,7 +276,7 @@ app.get("/admin/stats", (req, res) => {
   });
 });
 
-app.get("/admin/laporan", (req, res) => {
+app.get("/api/admin/laporan", (req, res) => {
   const sql =
     "SELECT l.*, u.nama as nama_pelapor, u.kelas FROM laporan l JOIN users u ON l.id_siswa = u.id ORDER BY l.id DESC";
   db.query(sql, (err, result) => {
@@ -285,7 +285,7 @@ app.get("/admin/laporan", (req, res) => {
   });
 });
 
-app.put("/admin/update-laporan/:id", (req, res) => {
+app.put("/api/admin/update-laporan/:id", (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
   const sqlGetEmail =
@@ -317,7 +317,7 @@ app.put("/admin/update-laporan/:id", (req, res) => {
   });
 });
 
-app.get("/admin/konsultasi", (req, res) => {
+app.get("/api/admin/konsultasi", (req, res) => {
   const sql =
     "SELECT k.*, u.nama as nama, u.kelas, g.nama_guru FROM konsultasi k JOIN users u ON k.id_siswa = u.id JOIN guru g ON k.id_guru = g.id_guru ORDER BY k.id DESC";
   db.query(sql, (err, result) => {
@@ -326,7 +326,7 @@ app.get("/admin/konsultasi", (req, res) => {
   });
 });
 
-app.put("/admin/update-konsultasi/:id", (req, res) => {
+app.put("/api/admin/update-konsultasi/:id", (req, res) => {
   const { jam, link_zoom, pesan_admin, status } = req.body;
   const { id } = req.params;
   const sqlGetEmail =
@@ -360,7 +360,7 @@ app.put("/admin/update-konsultasi/:id", (req, res) => {
 // --- [ ENDPOINT KELOLA VERIFIKASI SISWA UNTUK ADMIN BK ] ---
 
 // 1. Endpoint mendapatkan seluruh data siswa baru berstatus PENDING
-app.get("/admin/siswa-pending", (req, res) => {
+app.get("/api/admin/siswa-pending", (req, res) => {
   const sql = "SELECT id, nama, email, kelas, created_at FROM users WHERE role = 'siswa' AND status_aktif = 'PENDING' ORDER BY id DESC";
   db.query(sql, (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -369,7 +369,7 @@ app.get("/admin/siswa-pending", (req, res) => {
 });
 
 // 2. Endpoint Aksi Setujui (Mengaktifkan status_aktif akun menjadi 'AKTIF')
-app.put("/admin/verifikasi-siswa/:id", (req, res) => {
+app.put("/api/admin/verifikasi-siswa/:id", (req, res) => {
   const { id } = req.params;
   const sql = "UPDATE users SET status_aktif = 'AKTIF' WHERE id = ?";
   db.query(sql, [id], (err, result) => {
@@ -379,7 +379,7 @@ app.put("/admin/verifikasi-siswa/:id", (req, res) => {
 });
 
 // 3. Endpoint Aksi Tolak & Hapus (Menghapus akun palsu/fiktif secara permanen)
-app.delete("/admin/tolak-siswa/:id", (req, res) => {
+app.delete("/api/admin/tolak-siswa/:id", (req, res) => {
   const { id } = req.params;
   const sql = "DELETE FROM users WHERE id = ? AND status_aktif = 'PENDING'";
   db.query(sql, [id], (err, result) => {
